@@ -1,0 +1,110 @@
+﻿<section class="booking-flow-page">
+  <header class="flow-header">
+    <button class="back-btn" type="button" (click)="volver()">← Volver</button>
+
+    <div>
+      <span class="flow-badge">Reserva de vuelo</span>
+      <h1>Completa tu reserva</h1>
+      <p>Revisa tu vuelo y avanza paso a paso hasta confirmar la compra.</p>
+    </div>
+  </header>
+
+  <section class="flight-summary" *ngIf="vuelo">
+    <div class="route">
+      <div>
+        <strong>{{ vuelo.origenCodigo || vuelo.origen || 'Origen' }}</strong>
+        <span>{{ vuelo.origenCiudad || vuelo.origenNombre || '' }}</span>
+      </div>
+
+      <div class="plane-line">✈</div>
+
+      <div>
+        <strong>{{ vuelo.destinoCodigo || vuelo.destino || 'Destino' }}</strong>
+        <span>{{ vuelo.destinoCiudad || vuelo.destinoNombre || '' }}</span>
+      </div>
+    </div>
+
+    <div class="flight-data">
+      <article>
+        <span>Número vuelo</span>
+        <strong>{{ vuelo.numeroVuelo || vuelo.codigo || 'BV-000' }}</strong>
+      </article>
+
+      <article>
+        <span>Salida</span>
+        <strong>{{ vuelo.horaSalida || vuelo.salida || '08:30' }}</strong>
+      </article>
+
+      <article>
+        <span>Llegada</span>
+        <strong>{{ vuelo.horaLlegada || vuelo.llegada || '10:15' }}</strong>
+      </article>
+
+      <article>
+        <span>Avión</span>
+        <strong>{{ vuelo.avion || vuelo.nombreAvion || 'Avión asignado' }}</strong>
+      </article>
+
+      <article>
+        <span>Precio base</span>
+        <strong>${{ vuelo.precio || vuelo.precioBase || 0 }}</strong>
+      </article>
+    </div>
+  </section>
+
+  <section class="steps">
+    <div
+      class="step"
+      *ngFor="let paso of pasos"
+      [class.active]="paso.numero === pasoActual"
+      [class.done]="paso.numero < pasoActual"
+    >
+      <span>{{ paso.numero }}</span>
+      <p>{{ paso.titulo }}</p>
+    </div>
+  </section>
+
+  <section class="step-content">
+    <ng-container [ngSwitch]="pasoActual">
+      <div *ngSwitchCase="1">
+        <h2>Datos de pasajeros</h2>
+        <p>Aquí registraremos los datos de cada pasajero antes de crear la reserva.</p>
+      </div>
+
+      <div *ngSwitchCase="2">
+        <h2>Selección de asientos</h2>
+        <p>Aquí el usuario elegirá los asientos disponibles para el vuelo.</p>
+      </div>
+
+      <div *ngSwitchCase="3">
+        <h2>Equipaje</h2>
+        <p>Aquí se agregará equipaje adicional si el cliente lo desea.</p>
+      </div>
+
+      <div *ngSwitchCase="4">
+        <h2>Resumen de compra</h2>
+        <p>Aquí se mostrará vuelo, pasajeros, asientos, equipaje y total.</p>
+      </div>
+
+      <div *ngSwitchCase="5">
+        <h2>Método de pago</h2>
+        <p>Aquí se seleccionará el método de pago y se confirmará la transacción.</p>
+      </div>
+
+      <div *ngSwitchCase="6">
+        <h2>Confirmación</h2>
+        <p>Aquí se mostrará la reserva confirmada, factura y boleto generado.</p>
+      </div>
+    </ng-container>
+
+    <div class="flow-actions">
+      <button type="button" class="secondary" (click)="pasoAnterior()" [disabled]="pasoActual === 1">
+        Anterior
+      </button>
+
+      <button type="button" class="primary" (click)="siguientePaso()" [disabled]="pasoActual === pasos.length">
+        Siguiente
+      </button>
+    </div>
+  </section>
+</section>

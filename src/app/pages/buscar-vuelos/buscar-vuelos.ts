@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+﻿import { Component, EventEmitter, Output } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -51,6 +51,8 @@ interface Vuelo {
   styleUrl: './buscar-vuelos.css'
 })
 export class BuscarVuelos {
+  @Output() vueloSeleccionado = new EventEmitter<any>();
+
   aeropuertos: Aeropuerto[] = [];
   vuelosEncontrados: Vuelo[] = [];
 
@@ -60,7 +62,7 @@ export class BuscarVuelos {
   fechaSalida = '';
   fechaRegreso = '';
   pasajeros = 1;
-  clase = 'Económica';
+  clase = 'EconÃ³mica';
 
   mensajeBusqueda = '';
 
@@ -132,5 +134,8 @@ export class BuscarVuelos {
     ];
 
     this.mensajeBusqueda = `Se encontraron ${this.vuelosEncontrados.length} vuelo(s) disponibles.`;
+  }
+    seleccionarVuelo(vuelo: any) {
+    this.vueloSeleccionado.emit(vuelo);
   }
 }

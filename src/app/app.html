@@ -1,5 +1,10 @@
 @if (vistaActual === 'admin') {
   <app-admin-dashboard (salirAdmin)="salirAdmin()"></app-admin-dashboard>
+} @else if (vistaActual === 'booking') {
+  <app-booking-flow
+    [vuelo]="vueloSeleccionado"
+    (volverHome)="volverHomeDesdeBooking()">
+  </app-booking-flow>
 } @else {
   <header class="topbar">
     <div class="container topbar-inner">
@@ -49,7 +54,7 @@
 
   <section class="search-section">
     <div class="container">
-      <app-buscar-vuelos></app-buscar-vuelos>
+      <app-buscar-vuelos (vueloSeleccionado)="iniciarFlujoReserva($event)"></app-buscar-vuelos>
     </div>
   </section>
 

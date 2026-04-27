@@ -1,0 +1,215 @@
+﻿.booking-flow-page {
+  min-height: 100vh;
+  padding: 36px;
+  background: linear-gradient(135deg, #f6f8ff, #eef2ff);
+  color: #160047;
+}
+
+.flow-header {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  max-width: 1180px;
+  margin: 0 auto 24px;
+}
+
+.back-btn {
+  border: none;
+  border-radius: 16px;
+  background: white;
+  color: #160047;
+  padding: 14px 18px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(20, 0, 80, 0.12);
+}
+
+.flow-badge {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #efe9ff;
+  color: #6d4aff;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.flow-header h1 {
+  margin: 0;
+  font-size: 2.4rem;
+}
+
+.flow-header p {
+  margin: 8px 0 0;
+  color: #66708a;
+  font-weight: 600;
+}
+
+.flight-summary,
+.steps,
+.step-content {
+  max-width: 1180px;
+  margin: 0 auto 24px;
+  background: white;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 18px 45px rgba(20, 0, 80, 0.10);
+}
+
+.route {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  margin-bottom: 24px;
+}
+
+.route div {
+  text-align: center;
+}
+
+.route strong {
+  display: block;
+  font-size: 2.2rem;
+  color: #160047;
+}
+
+.route span {
+  color: #72809a;
+  font-weight: 700;
+}
+
+.plane-line {
+  width: 120px;
+  height: 2px;
+  background: #ff2e74;
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: #ff2e74;
+  font-size: 1.6rem;
+}
+
+.flight-data {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+}
+
+.flight-data article {
+  padding: 18px;
+  border-radius: 18px;
+  background: #f8f9ff;
+}
+
+.flight-data span {
+  display: block;
+  color: #7b849a;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.flight-data strong {
+  color: #160047;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+}
+
+.step {
+  padding: 16px;
+  border-radius: 18px;
+  background: #f4f6ff;
+  text-align: center;
+  border: 2px solid transparent;
+}
+
+.step span {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #d9def5;
+  color: #160047;
+  font-weight: 900;
+}
+
+.step p {
+  margin: 8px 0 0;
+  font-weight: 900;
+}
+
+.step.active {
+  border-color: #ff2e74;
+  background: #fff2f7;
+}
+
+.step.active span {
+  background: #ff2e74;
+  color: white;
+}
+
+.step.done {
+  background: #eefff5;
+}
+
+.step.done span {
+  background: #14b86a;
+  color: white;
+}
+
+.step-content h2 {
+  margin: 0 0 10px;
+  font-size: 1.8rem;
+}
+
+.step-content p {
+  color: #68738d;
+  font-weight: 600;
+}
+
+.flow-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.flow-actions button {
+  height: 50px;
+  padding: 0 26px;
+  border: none;
+  border-radius: 16px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.flow-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.secondary {
+  background: #eef1ff;
+  color: #160047;
+}
+
+.primary {
+  background: linear-gradient(135deg, #ff2e74, #6d4aff);
+  color: white;
+}
+
+@media (max-width: 900px) {
+  .flight-data,
+  .steps {
+    grid-template-columns: 1fr;
+  }
+
+  .route {
+    flex-direction: column;
+  }
+}
