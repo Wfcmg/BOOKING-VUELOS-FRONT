@@ -1,0 +1,81 @@
+﻿<section class="login-page">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-icon">✈</div>
+      <div>
+        <h1>Booking Vuelos</h1>
+        <p>{{ modo === 'login' ? 'Accede a tu cuenta' : 'Crea tu cuenta' }}</p>
+      </div>
+    </div>
+
+    <div class="login-toggle">
+      <button type="button" [class.active]="modo === 'login'" (click)="cambiarModo('login')">
+        Iniciar sesión
+      </button>
+
+      <button type="button" [class.active]="modo === 'registro'" (click)="cambiarModo('registro')">
+        Crear cuenta
+      </button>
+    </div>
+
+    <div class="login-form">
+      <label>Usuario</label>
+      <input
+        type="text"
+        placeholder="Ej: william"
+        [(ngModel)]="userName"
+        name="userName"
+      />
+
+      @if (modo === 'registro') {
+        <label>Nombre completo</label>
+        <input
+          type="text"
+          placeholder="Ej: William Carrion"
+          [(ngModel)]="nombreCompleto"
+          name="nombreCompleto"
+        />
+
+        <label>Correo electrónico</label>
+        <input
+          type="email"
+          placeholder="Ej: william@test.com"
+          [(ngModel)]="correoElectronico"
+          name="correoElectronico"
+        />
+
+        <label>Teléfono</label>
+        <input
+        type="text"
+        placeholder="Ej: 0999999999"
+        [(ngModel)]="telefono"
+        name="telefono"
+        maxlength="15"
+        (keydown)="soloNumeros($event)"
+      />
+      }
+
+      <label>Contraseña</label>
+      <input
+        type="password"
+        placeholder="Ingresa tu contraseña"
+        [(ngModel)]="password"
+        name="password"
+      />
+
+      @if (modo === 'login') {
+        <button type="button" (click)="iniciarSesion()" [disabled]="cargando">
+          {{ cargando ? 'Ingresando...' : 'Iniciar sesión' }}
+        </button>
+      } @else {
+        <button type="button" (click)="crearCuenta()" [disabled]="cargando">
+          {{ cargando ? 'Creando cuenta...' : 'Crear cuenta' }}
+        </button>
+      }
+
+      <p class="message" [class.ok]="tipoMensaje === 'ok'" [class.error]="tipoMensaje === 'error'" *ngIf="mensaje">
+        {{ mensaje }}
+      </p>
+    </div>
+  </div>
+</section>
