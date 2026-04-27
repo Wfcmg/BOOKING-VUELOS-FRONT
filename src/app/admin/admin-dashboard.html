@@ -1,0 +1,59 @@
+﻿<section class="admin-page">
+  <aside class="admin-sidebar">
+    <div class="admin-logo">
+      <div class="logo-icon">✈</div>
+      <div>
+        <h2>Booking</h2>
+        <span>Admin Panel</span>
+      </div>
+    </div>
+
+    <nav class="admin-menu">
+      <a class="active">Dashboard</a>
+      <a>Operación aérea</a>
+      <a>Ventas</a>
+      <a>Seguridad</a>
+      <a>Postventa</a>
+    </nav>
+
+    <button class="logout-admin" type="button" (click)="cerrarPanel()">
+      Cerrar sesión
+    </button>
+  </aside>
+
+  <main class="admin-main">
+    <header class="admin-header">
+      <div>
+        <span class="admin-badge">ADMINISTRADOR</span>
+        <h1>Panel administrativo</h1>
+        <p>Gestiona la operación, ventas, usuarios y control general del sistema.</p>
+      </div>
+    </header>
+
+    <section class="admin-stats">
+      <article>
+        <strong>24</strong>
+        <span>Módulos activos</span>
+      </article>
+
+      <article>
+        <strong>ADMIN</strong>
+        <span>Rol actual</span>
+      </article>
+
+      <article>
+        <strong>Online</strong>
+        <span>Estado del sistema</span>
+      </article>
+    </section>
+
+    <section class="modules-grid">
+      <article class="module-card" *ngFor="let modulo of modulos">
+        <div class="module-icon">{{ modulo.icono }}</div>
+        <h3>{{ modulo.titulo }}</h3>
+        <p>{{ modulo.descripcion }}</p>
+        <button type="button">Gestionar</button>
+      </article>
+    </section>
+  </main>
+</section>

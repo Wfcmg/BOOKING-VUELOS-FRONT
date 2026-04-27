@@ -1,115 +1,119 @@
-<header class="topbar">
-  <div class="container topbar-inner">
-    <div class="brand">
-      <div class="brand-icon">✈</div>
-      <div class="brand-text">
-        <h1>Booking</h1>
-        <span>Vuelos</span>
-      </div>
-    </div>
-
-    <nav class="nav-links">
-      <a href="#">Descubre</a>
-      <a href="#">Mis viajes</a>
-      <a href="#">Centro de ayuda</a>
-    </nav>
-
-    @if (!authService.estaLogueado()) {
-      <button class="login-btn" (click)="abrirLogin()">Iniciar sesión</button>
-    } @else {
-      <div class="user-box">
-        <div class="user-avatar">👤</div>
-
-        <div class="user-info">
-          <strong>{{ authService.obtenerNombreUsuario() }}</strong>
-          <span>{{ authService.obtenerRol() }}</span>
+@if (vistaActual === 'admin') {
+  <app-admin-dashboard (salirAdmin)="salirAdmin()"></app-admin-dashboard>
+} @else {
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">
+        <div class="brand-icon">✈</div>
+        <div class="brand-text">
+          <h1>Booking</h1>
+          <span>Vuelos</span>
         </div>
-
-        <button class="logout-btn" (click)="cerrarSesion()">Salir</button>
-      </div>
-    }
-  </div>
-</header>
-
-<section class="hero">
-  <div class="hero-overlay"></div>
-
-  <div class="container hero-content">
-    <span class="hero-badge">✈ Tu próxima aventura empieza aquí</span>
-    <h2>¿Listo para tu próximo vuelo?</h2>
-    <p>
-      Busca destinos, compara horarios y reserva tu boleto de forma rápida,
-      segura y con una experiencia moderna.
-    </p>
-  </div>
-</section>
-
-<section class="search-section">
-  <div class="container">
-    <app-buscar-vuelos></app-buscar-vuelos>
-  </div>
-</section>
-
-<section class="offers">
-  <div class="container">
-    <div class="section-header">
-      <div>
-        <h2>Descubre las mejores ofertas</h2>
-        <p>Rutas populares con precios increíbles para tu próximo viaje.</p>
       </div>
 
-      <a href="#" class="see-all">Ver todas</a>
-    </div>
+      <nav class="nav-links">
+        <a href="#">Descubre</a>
+        <a href="#">Mis viajes</a>
+        <a href="#">Centro de ayuda</a>
+      </nav>
 
-    <div class="offers-grid">
-      <article class="offer-card">
-        <div class="offer-image offer-1"></div>
-        <div class="offer-content">
-          <span class="offer-tag">Oferta especial</span>
-          <h3>Quito → Guayaquil</h3>
-          <p>Vuelo rápido ideal para escapadas o viajes de trabajo.</p>
-          <div class="offer-footer">
-            <strong>Desde $59</strong>
-            <button>Reservar</button>
+      @if (!authService.estaLogueado()) {
+        <button class="login-btn" (click)="abrirLogin()">Iniciar sesión</button>
+      } @else {
+        <div class="user-box">
+          <div class="user-avatar">👤</div>
+
+          <div class="user-info">
+            <strong>{{ authService.obtenerNombreUsuario() }}</strong>
+            <span>{{ authService.obtenerRol() }}</span>
           </div>
-        </div>
-      </article>
 
-      <article class="offer-card">
-        <div class="offer-image offer-2"></div>
-        <div class="offer-content">
-          <span class="offer-tag">Más buscado</span>
-          <h3>Quito → Bogotá</h3>
-          <p>Conecta con una de las ciudades más vibrantes de la región.</p>
-          <div class="offer-footer">
-            <strong>Desde $129</strong>
-            <button>Reservar</button>
-          </div>
+          <button class="logout-btn" (click)="cerrarSesion()">Salir</button>
         </div>
-      </article>
-
-      <article class="offer-card">
-        <div class="offer-image offer-3"></div>
-        <div class="offer-content">
-          <span class="offer-tag">Imperdible</span>
-          <h3>Guayaquil → Lima</h3>
-          <p>Explora gastronomía, cultura y experiencias únicas.</p>
-          <div class="offer-footer">
-            <strong>Desde $149</strong>
-            <button>Reservar</button>
-          </div>
-        </div>
-      </article>
+      }
     </div>
-  </div>
-</section>
-@if (mostrarLogin) {
-  <div class="login-modal">
-    <div class="login-backdrop" (click)="cerrarLogin()"></div>
+  </header>
 
-    <div class="login-modal-content">
-      <button class="close-login" type="button" (click)="cerrarLogin()">×</button>
-      <app-login (loginCorrecto)="cerrarLogin()"></app-login>
+  <section class="hero">
+    <div class="hero-overlay"></div>
+
+    <div class="container hero-content">
+      <span class="hero-badge">✈ Tu próxima aventura empieza aquí</span>
+      <h2>¿Listo para tu próximo vuelo?</h2>
+      <p>
+        Busca destinos, compara horarios y reserva tu boleto de forma rápida,
+        segura y con una experiencia moderna.
+      </p>
     </div>
-  </div>
+  </section>
+
+  <section class="search-section">
+    <div class="container">
+      <app-buscar-vuelos></app-buscar-vuelos>
+    </div>
+  </section>
+
+  <section class="offers">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <h2>Descubre las mejores ofertas</h2>
+          <p>Rutas populares con precios increíbles para tu próximo viaje.</p>
+        </div>
+
+        <a href="#" class="see-all">Ver todas</a>
+      </div>
+
+      <div class="offers-grid">
+        <article class="offer-card">
+          <div class="offer-image offer-1"></div>
+          <div class="offer-content">
+            <span class="offer-tag">Oferta especial</span>
+            <h3>Quito → Guayaquil</h3>
+            <p>Vuelo rápido ideal para escapadas o viajes de trabajo.</p>
+            <div class="offer-footer">
+              <strong>Desde $59</strong>
+              <button>Reservar</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="offer-card">
+          <div class="offer-image offer-2"></div>
+          <div class="offer-content">
+            <span class="offer-tag">Más buscado</span>
+            <h3>Quito → Bogotá</h3>
+            <p>Conecta con una de las ciudades más vibrantes de la región.</p>
+            <div class="offer-footer">
+              <strong>Desde $129</strong>
+              <button>Reservar</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="offer-card">
+          <div class="offer-image offer-3"></div>
+          <div class="offer-content">
+            <span class="offer-tag">Imperdible</span>
+            <h3>Guayaquil → Lima</h3>
+            <p>Explora gastronomía, cultura y experiencias únicas.</p>
+            <div class="offer-footer">
+              <strong>Desde $149</strong>
+              <button>Reservar</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+  @if (mostrarLogin) {
+    <div class="login-modal">
+      <div class="login-backdrop" (click)="cerrarLogin()"></div>
+
+      <div class="login-modal-content">
+        <button class="close-login" type="button" (click)="cerrarLogin()">×</button>
+        <app-login (loginCorrecto)="procesarLogin($event)"></app-login>
+      </div>
+    </div>
+  }
 }
