@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { BuscarVuelos } from './buscar-vuelos';
 
@@ -20,3 +20,4 @@ describe('BuscarVuelos', () => {
     expect(component).toBeTruthy();
   });
 });
+

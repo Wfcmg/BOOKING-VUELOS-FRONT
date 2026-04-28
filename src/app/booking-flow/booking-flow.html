@@ -1,53 +1,53 @@
 ﻿<section class="booking-flow-page">
   <header class="flow-header">
-    <button class="back-btn" type="button" (click)="volver()">← Volver</button>
+    <button class="back-btn" type="button" (click)="volver()">â† Volver</button>
 
     <div>
       <span class="flow-badge">Reserva de vuelo</span>
       <h1>Completa tu reserva</h1>
-      <p>Revisa tu vuelo y avanza paso a paso hasta confirmar la compra.</p>
+      <p>Registra pasajeros, asientos, equipaje y pago simulado para generar reserva, factura y boleto.</p>
     </div>
   </header>
 
   <section class="flight-summary" *ngIf="vuelo">
     <div class="route">
       <div>
-        <strong>{{ vuelo.origenCodigo || vuelo.origen || 'Origen' }}</strong>
-        <span>{{ vuelo.origenCiudad || vuelo.origenNombre || '' }}</span>
+        <strong>{{ origenCodigo }}</strong>
+        <span>{{ origenCiudad }}</span>
       </div>
 
       <div class="plane-line">✈</div>
 
       <div>
-        <strong>{{ vuelo.destinoCodigo || vuelo.destino || 'Destino' }}</strong>
-        <span>{{ vuelo.destinoCiudad || vuelo.destinoNombre || '' }}</span>
+        <strong>{{ destinoCodigo }}</strong>
+        <span>{{ destinoCiudad }}</span>
       </div>
     </div>
 
     <div class="flight-data">
       <article>
         <span>Número vuelo</span>
-        <strong>{{ vuelo.numeroVuelo || vuelo.codigo || 'BV-000' }}</strong>
+        <strong>{{ vuelo.numeroVuelo || 'BV-000' }}</strong>
       </article>
 
       <article>
         <span>Salida</span>
-        <strong>{{ vuelo.horaSalida || vuelo.salida || '08:30' }}</strong>
+        <strong>{{ vuelo.fechaSalidaProgramada | date:'dd/MM/yyyy HH:mm' }}</strong>
       </article>
 
       <article>
         <span>Llegada</span>
-        <strong>{{ vuelo.horaLlegada || vuelo.llegada || '10:15' }}</strong>
+        <strong>{{ vuelo.fechaLlegadaProgramada | date:'HH:mm' }}</strong>
       </article>
 
       <article>
         <span>Avión</span>
-        <strong>{{ vuelo.avion || vuelo.nombreAvion || 'Avión asignado' }}</strong>
+        <strong>{{ avionModelo }}</strong>
       </article>
 
       <article>
         <span>Precio base</span>
-        <strong>${{ vuelo.precio || vuelo.precioBase || 0 }}</strong>
+        <strong>${{ precioBase }}</strong>
       </article>
     </div>
   </section>
@@ -64,47 +64,290 @@
     </div>
   </section>
 
+  <div class="message" *ngIf="mensaje" [class.ok]="tipoMensaje === 'ok'" [class.error]="tipoMensaje === 'error'">
+    {{ mensaje }}
+  </div>
+
   <section class="step-content">
     <ng-container [ngSwitch]="pasoActual">
+
       <div *ngSwitchCase="1">
         <h2>Datos de pasajeros</h2>
-        <p>Aquí registraremos los datos de cada pasajero antes de crear la reserva.</p>
+        <p>Se crea un formulario por cada pasajero seleccionado en la búsqueda.</p>
+
+        <div class="passenger-grid">
+          <article class="form-card" *ngFor="let p of pasajeros; let i = index">
+            <h3>Pasajero {{ i + 1 }}</h3>
+
+            <div class="form-grid">
+              <label>Nombres
+                <input type="text" [(ngModel)]="p.nombres" placeholder="Ej. William" />
+              </label>
+
+              <label>Apellidos
+                <input type="text" [(ngModel)]="p.apellidos" placeholder="Ej. Carrion" />
+              </label>
+
+              <label>Fecha nacimiento
+                <input type="date" [(ngModel)]="p.fechaNacimiento" />
+              </label>
+
+              <label>Género
+                <select [(ngModel)]="p.genero">
+                  <option value="N/A">Prefiero no decir</option>
+                  <option value="M">Masculino</option>
+                  <option value="F">Femenino</option>
+                </select>
+              </label>
+
+              <label>Nacionalidad
+                <input type="text" [(ngModel)]="p.nacionalidad" />
+              </label>
+
+              <label>Tipo documento
+                <select [(ngModel)]="p.tipoDocumento">
+                  <option value="CEDULA">Cédula</option>
+                  <option value="PASAPORTE">Pasaporte</option>
+                </select>
+              </label>
+
+              <label>Número documento
+                <input type="text" [(ngModel)]="p.numeroDocumento" />
+              </label>
+
+              <label>Expiración documento
+                <input type="date" [(ngModel)]="p.fechaExpiracionDocumento" />
+              </label>
+            </div>
+          </article>
+        </div>
       </div>
 
       <div *ngSwitchCase="2">
         <h2>Selección de asientos</h2>
-        <p>Aquí el usuario elegirá los asientos disponibles para el vuelo.</p>
+        <p>Selecciona un asiento por pasajero. No se permite repetir asientos.</p>
+
+        <div class="seat-wrapper">
+          <div class="plane-map">
+            <div class="plane-nose">CABINA</div>
+
+            <div class="seat-grid">
+              <button
+                *ngFor="let asiento of asientos"
+                type="button"
+                class="seat"
+                [class.selected]="pasajeros[0]?.numeroAsiento === asiento.numero || asientoSeleccionadoPorOtro(pasajeros[0], asiento.numero)"
+                [class.blocked]="asiento.ocupado"
+                [disabled]="asiento.ocupado"
+              >
+                {{ asiento.numero }}
+              </button>
+            </div>
+          </div>
+
+          <div class="seat-select-list">
+            <article *ngFor="let p of pasajeros; let i = index">
+              <h3>{{ p.nombres || 'Pasajero ' + (i + 1) }}</h3>
+              <select [(ngModel)]="p.numeroAsiento">
+                <option value="">Selecciona asiento</option>
+                <option
+                  *ngFor="let asiento of asientos"
+                  [value]="asiento.numero"
+                  [disabled]="asiento.ocupado || asientoSeleccionadoPorOtro(p, asiento.numero)"
+                >
+                  {{ asiento.numero }}
+                </option>
+              </select>
+              <span *ngIf="p.numeroAsiento">Asignado: {{ p.numeroAsiento }}</span>
+            </article>
+          </div>
+        </div>
       </div>
 
       <div *ngSwitchCase="3">
         <h2>Equipaje</h2>
-        <p>Aquí se agregará equipaje adicional si el cliente lo desea.</p>
+        <p>El artículo personal va incluido. Aquí puedes agregar maleta de bodega.</p>
+
+        <div class="baggage-list">
+          <article class="form-card" *ngFor="let p of pasajeros; let i = index">
+            <h3>{{ p.nombres || 'Pasajero ' + (i + 1) }}</h3>
+
+            <div class="form-grid">
+              <label>Tipo de equipaje
+                <select [(ngModel)]="p.equipajeTipo" (change)="actualizarEquipaje(p)">
+                  <option value="Sin equipaje extra">Sin equipaje extra - $0</option>
+                  <option value="Maleta 23kg">Maleta 23kg - $35</option>
+                  <option value="Maleta extra 32kg">Maleta extra 32kg - $60</option>
+                </select>
+              </label>
+
+              <label>Cantidad
+                <input type="number" min="0" max="2" [(ngModel)]="p.equipajeCantidad" readonly />
+              </label>
+
+              <label>Peso kg
+                <input type="number" min="0" [(ngModel)]="p.equipajePesoKg" readonly />
+              </label>
+
+              <label>Precio
+                <input type="number" min="0" [(ngModel)]="p.equipajePrecio" readonly />
+              </label>
+            </div>
+          </article>
+        </div>
       </div>
 
       <div *ngSwitchCase="4">
         <h2>Resumen de compra</h2>
-        <p>Aquí se mostrará vuelo, pasajeros, asientos, equipaje y total.</p>
+
+        <div class="summary-box">
+          <div>
+            <strong>Vuelo</strong>
+            <span>{{ origenCodigo }} → {{ destinoCodigo }} / {{ vuelo.numeroVuelo }}</span>
+          </div>
+
+          <div>
+            <strong>Pasajeros</strong>
+            <span>{{ pasajeros.length }}</span>
+          </div>
+
+          <div>
+            <strong>Boletos</strong>
+            <span>${{ totalBoletos }}</span>
+          </div>
+
+          <div>
+            <strong>Equipaje</strong>
+            <span>${{ totalEquipaje }}</span>
+          </div>
+
+          <div>
+            <strong>IVA 12%</strong>
+            <span>${{ iva }}</span>
+          </div>
+
+          <div class="summary-total">
+            <strong>Total</strong>
+            <span>${{ total }}</span>
+          </div>
+        </div>
+
+        <table class="mini-table">
+          <thead>
+            <tr>
+              <th>Pasajero</th>
+              <th>Documento</th>
+              <th>Asiento</th>
+              <th>Equipaje</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of pasajeros">
+              <td>{{ p.nombres }} {{ p.apellidos }}</td>
+              <td>{{ p.numeroDocumento }}</td>
+              <td>{{ p.numeroAsiento }}</td>
+              <td>{{ p.equipajeTipo }} - ${{ p.equipajePrecio }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <div *ngSwitchCase="5">
-        <h2>Método de pago</h2>
-        <p>Aquí se seleccionará el método de pago y se confirmará la transacción.</p>
+        <h2>Pago simulado y facturación</h2>
+        <p>El pago se simula, pero la reserva, pago, factura y boletos se guardan en la base de datos.</p>
+
+        <div class="form-card">
+          <div class="form-grid">
+            <label>Tipo documento
+              <select [(ngModel)]="datosFacturacion.tipoDocumento">
+                <option value="CEDULA">Cédula</option>
+                <option value="RUC">RUC</option>
+                <option value="PASAPORTE">Pasaporte</option>
+              </select>
+            </label>
+
+            <label>Cédula / RUC
+              <input type="text" [(ngModel)]="datosFacturacion.rucCedula" />
+            </label>
+
+            <label>Correo factura
+              <input type="email" [(ngModel)]="datosFacturacion.correo" />
+            </label>
+
+            <label>Teléfono
+              <input type="text" [(ngModel)]="datosFacturacion.telefono" />
+            </label>
+
+            <label>Dirección
+              <input type="text" [(ngModel)]="datosFacturacion.direccion" />
+            </label>
+
+            <label>Ciudad
+              <input type="text" [(ngModel)]="datosFacturacion.ciudad" />
+            </label>
+
+            <label>Provincia
+              <input type="text" [(ngModel)]="datosFacturacion.provincia" />
+            </label>
+
+            <label>País
+              <input type="text" [(ngModel)]="datosFacturacion.pais" />
+            </label>
+
+            <label>Número tarjeta
+              <input type="text" maxlength="19" [(ngModel)]="datosFacturacion.tarjetaNumero" placeholder="4111111111111111" />
+            </label>
+
+            <label>Nombre tarjeta
+              <input type="text" [(ngModel)]="datosFacturacion.tarjetaNombre" />
+            </label>
+
+            <label>Vencimiento
+              <input type="month" [(ngModel)]="datosFacturacion.tarjetaVencimiento" />
+            </label>
+
+            <label>CVV
+              <input type="password" maxlength="4" [(ngModel)]="datosFacturacion.tarjetaCvv" />
+            </label>
+          </div>
+        </div>
       </div>
 
       <div *ngSwitchCase="6">
         <h2>Confirmación</h2>
-        <p>Aquí se mostrará la reserva confirmada, factura y boleto generado.</p>
+
+        <div class="confirmation-card" *ngIf="confirmacion">
+          <h3>âœ… Reserva generada</h3>
+          <p><strong>Código reserva:</strong> {{ confirmacion.codigoReserva }}</p>
+          <p><strong>Factura:</strong> {{ confirmacion.numeroFactura }}</p>
+          <p><strong>Total:</strong> ${{ confirmacion.total }}</p>
+
+          <h4>Boletos</h4>
+          <ul>
+            <li *ngFor="let b of confirmacion.boletos">
+              {{ b.numeroBoleto }} / {{ b.eTicket || b.eticket || b.ETicket }} / {{ b.estadoBoleto }}
+            </li>
+          </ul>
+        </div>
+
+        <div class="confirmation-card" *ngIf="!confirmacion">
+          <h3>Reserva pendiente</h3>
+          <p>Completa el pago para generar la confirmación.</p>
+        </div>
       </div>
+
     </ng-container>
 
     <div class="flow-actions">
-      <button type="button" class="secondary" (click)="pasoAnterior()" [disabled]="pasoActual === 1">
+      <button type="button" class="secondary-btn" (click)="pasoAnterior()" [disabled]="pasoActual === 1 || procesando">
         Anterior
       </button>
 
-      <button type="button" class="primary" (click)="siguientePaso()" [disabled]="pasoActual === pasos.length">
-        Siguiente
+      <button type="button" class="primary-btn" (click)="siguientePaso()" [disabled]="pasoActual === 6 || procesando">
+        {{ pasoActual === 5 ? (procesando ? 'Procesando...' : 'Pagar y confirmar') : 'Siguiente' }}
       </button>
     </div>
   </section>
 </section>
+
+

@@ -1,12 +1,9 @@
-<section class="search-card">
-  <div class="search-tabs">
-    <button class="tab active" type="button">✈ Vuelos</button>
-    <button class="tab" type="button">🏨 Hoteles</button>
-  </div>
+﻿<div class="search-card">
+  <div class="tab-pill">✈ Vuelos</div>
 
-  <div class="search-head">
-    <h3>Encuentra tu vuelo ideal</h3>
-    <p>Busca por origen, destino y fechas de manera rápida.</p>
+  <div class="search-header">
+    <h2>Encuentra tu vuelo ideal</h2>
+    <p>Busca por origen, destino y fechas. No se permiten fechas pasadas.</p>
   </div>
 
   <div class="search-grid">
@@ -15,7 +12,7 @@
       <select id="origen" [(ngModel)]="origenId" name="origenId">
         <option [ngValue]="null">Selecciona origen</option>
         <option *ngFor="let aeropuerto of aeropuertos" [ngValue]="aeropuerto.aeropuertoId">
-        {{ aeropuerto.codigoIATA }} - {{ aeropuerto.nombre }} {{ aeropuerto.ciudad ? '(' + aeropuerto.ciudad.nombre + ')' : '' }}
+          {{ aeropuerto.codigoIATA }} - {{ aeropuerto.nombre }} {{ aeropuerto.ciudad ? '(' + aeropuerto.ciudad.nombre + ')' : '' }}
         </option>
       </select>
     </div>
@@ -25,7 +22,7 @@
       <select id="destino" [(ngModel)]="destinoId" name="destinoId">
         <option [ngValue]="null">Selecciona destino</option>
         <option *ngFor="let aeropuerto of aeropuertos" [ngValue]="aeropuerto.aeropuertoId">
-        {{ aeropuerto.codigoIATA }} - {{ aeropuerto.nombre }} {{ aeropuerto.ciudad ? '(' + aeropuerto.ciudad.nombre + ')' : '' }}
+          {{ aeropuerto.codigoIATA }} - {{ aeropuerto.nombre }} {{ aeropuerto.ciudad ? '(' + aeropuerto.ciudad.nombre + ')' : '' }}
         </option>
       </select>
     </div>
@@ -35,6 +32,7 @@
       <input
         id="fechaSalida"
         type="date"
+        [min]="minFecha"
         [(ngModel)]="fechaSalida"
         name="fechaSalida"
       />
@@ -45,6 +43,7 @@
       <input
         id="fechaRegreso"
         type="date"
+        [min]="fechaSalida || minFecha"
         [(ngModel)]="fechaRegreso"
         name="fechaRegreso"
       />
@@ -62,72 +61,87 @@
       />
     </div>
 
+    <div class="field">
+      <label for="clase">Clase</label>
+      <select id="clase" [(ngModel)]="clase" name="clase">
+        <option value="Económica">Económica</option>
+        <option value="Ejecutiva">Ejecutiva</option>
+        <option value="Primera">Primera</option>
+      </select>
+    </div>
+
     <div class="action-area">
-      <button class="search-btn" (click)="buscarVuelos()">Buscar vuelos</button>
+      <button class="search-btn" type="button" (click)="buscarVuelos()" [disabled]="buscando">
+        {{ buscando ? 'Buscando...' : 'Buscar vuelos' }}
+      </button>
     </div>
   </div>
+
+  <div class="message" *ngIf="mensajeBusqueda" [class.error]="errorBusqueda">
+    {{ mensajeBusqueda }}
+  </div>
+
   <div class="results-panel" *ngIf="vuelosEncontrados.length > 0">
-  <div class="results-header">
-    <div>
-      <h3>Vuelos disponibles</h3>
-      <p>{{ mensajeBusqueda }}</p>
+    <div class="results-header">
+      <div>
+        <h3>Vuelos disponibles</h3>
+        <p>{{ mensajeBusqueda }}</p>
+      </div>
+    </div>
+
+    <div class="flights-list">
+      <article class="flight-card" *ngFor="let vuelo of vuelosEncontrados">
+        <div class="flight-main">
+          <div class="flight-route">
+            <div>
+              <span class="airport-code">
+                {{ vuelo.ruta?.aeropuertoOrigen?.codigoIATA }}
+              </span>
+              <p>{{ vuelo.ruta?.aeropuertoOrigen?.ciudad?.nombre }}</p>
+            </div>
+
+            <div class="route-line">
+              <span>✈</span>
+            </div>
+
+            <div>
+              <span class="airport-code">
+                {{ vuelo.ruta?.aeropuertoDestino?.codigoIATA }}
+              </span>
+              <p>{{ vuelo.ruta?.aeropuertoDestino?.ciudad?.nombre }}</p>
+            </div>
+          </div>
+
+          <div class="flight-info">
+            <span>Número vuelo</span>
+            <strong>{{ vuelo.numeroVuelo }}</strong>
+          </div>
+
+          <div class="flight-info">
+            <span>Salida</span>
+            <strong>{{ vuelo.fechaSalidaProgramada | date:'HH:mm' }}</strong>
+          </div>
+
+          <div class="flight-info">
+            <span>Llegada</span>
+            <strong>{{ vuelo.fechaLlegadaProgramada | date:'HH:mm' }}</strong>
+          </div>
+
+          <div class="flight-info">
+            <span>Avión</span>
+            <strong>{{ vuelo.avion?.modelo || 'Avión comercial' }}</strong>
+          </div>
+
+          <div class="flight-info price">
+            <span>Precio base</span>
+            <strong>${{ vuelo.precioBase || 129 }}</strong>
+          </div>
+
+          <button class="select-flight-btn" type="button" (click)="seleccionarVuelo(vuelo)">
+            Seleccionar
+          </button>
+        </div>
+      </article>
     </div>
   </div>
-
-  <div class="flights-list">
-    <article class="flight-card" *ngFor="let vuelo of vuelosEncontrados">
-      <div class="flight-main">
-        <div class="flight-route">
-          <div>
-            <span class="airport-code">
-              {{ vuelo.ruta?.aeropuertoOrigen?.codigoIATA }}
-            </span>
-            <p>{{ vuelo.ruta?.aeropuertoOrigen?.ciudad?.nombre }}</p>
-          </div>
-
-          <div class="route-line">
-            <span>✈</span>
-          </div>
-
-          <div>
-            <span class="airport-code">
-              {{ vuelo.ruta?.aeropuertoDestino?.codigoIATA }}
-            </span>
-            <p>{{ vuelo.ruta?.aeropuertoDestino?.ciudad?.nombre }}</p>
-          </div>
-        </div>
-
-        <div class="flight-info">
-          <span>Número vuelo</span>
-          <strong>{{ vuelo.numeroVuelo }}</strong>
-        </div>
-
-        <div class="flight-info">
-          <span>Salida</span>
-          <strong>{{ vuelo.fechaSalidaProgramada | date:'HH:mm' }}</strong>
-        </div>
-
-        <div class="flight-info">
-          <span>Llegada</span>
-          <strong>{{ vuelo.fechaLlegadaProgramada | date:'HH:mm' }}</strong>
-        </div>
-
-        <div class="flight-info">
-          <span>Avión</span>
-          <strong>{{ vuelo.avion?.modelo }}</strong>
-        </div>
-      </div>
-
-      <div class="flight-action">
-        <span>Desde</span>
-        <strong>$129</strong>
-        <button type="button" (click)="seleccionarVuelo(vuelo)">Seleccionar</button>
-      </div>
-    </article>
-  </div>
 </div>
-
-<div class="empty-message" *ngIf="mensajeBusqueda && vuelosEncontrados.length === 0">
-  {{ mensajeBusqueda }}
-</div>
-</section>

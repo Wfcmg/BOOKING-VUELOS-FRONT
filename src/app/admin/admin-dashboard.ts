@@ -33,3 +33,4 @@ export class AdminDashboard {
     this.salirAdmin.emit();
   }
 }
+

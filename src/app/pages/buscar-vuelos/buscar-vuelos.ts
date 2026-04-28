@@ -1,4 +1,4 @@
-﻿import { Component, EventEmitter, Output } from '@angular/core';
+﻿import { Component, EventEmitter, Output, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -15,22 +15,6 @@ interface Aeropuerto {
   };
 }
 
-interface Ruta {
-  rutaId: number;
-  aeropuertoOrigenId: number;
-  aeropuertoDestinoId: number;
-  distanciaKm: number;
-  duracionMinutos: number;
-  aeropuertoOrigen?: Aeropuerto;
-  aeropuertoDestino?: Aeropuerto;
-}
-
-interface Avion {
-  avionId: number;
-  modelo?: string;
-  matricula?: string;
-}
-
 interface Vuelo {
   vueloId: number;
   rutaId: number;
@@ -40,8 +24,9 @@ interface Vuelo {
   fechaLlegadaProgramada: string;
   estado: string;
   activo: boolean;
-  ruta?: Ruta;
-  avion?: Avion;
+  precioBase?: number;
+  ruta?: any;
+  avion?: any;
 }
 
 @Component({
@@ -59,83 +44,148 @@ export class BuscarVuelos {
   origenId: number | null = null;
   destinoId: number | null = null;
 
-  fechaSalida = '';
+  fechaSalida = this.obtenerFechaHoy();
   fechaRegreso = '';
   pasajeros = 1;
-  clase = 'EconÃ³mica';
+  clase = 'Económica';
 
+  minFecha = this.obtenerFechaHoy();
+  buscando = false;
   mensajeBusqueda = '';
+  errorBusqueda = false;
 
   private apiUrl = 'http://localhost:5123/api';
+  private temporizadorBusqueda: any = null;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {
     this.cargarAeropuertos();
+  }
+
+  private obtenerFechaHoy(): string {
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear();
+    const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoy.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  private cerrarCarga() {
+    this.buscando = false;
+    this.cdr.detectChanges();
+
+    if (this.temporizadorBusqueda) {
+      clearTimeout(this.temporizadorBusqueda);
+      this.temporizadorBusqueda = null;
+    }
   }
 
   cargarAeropuertos() {
     this.http.get<Aeropuerto[]>(`${this.apiUrl}/Aeropuertos`).subscribe({
       next: (data) => {
-        this.aeropuertos = data;
-        console.log('Aeropuertos cargados:', this.aeropuertos);
+        this.aeropuertos = data || [];
       },
       error: (error) => {
         console.error('Error cargando aeropuertos:', error);
+        this.mensajeBusqueda = 'No se pudieron cargar los aeropuertos desde la API.';
+        this.errorBusqueda = true;
       }
     });
   }
 
-  buscarVuelos() {
+  async buscarVuelos() {
     this.mensajeBusqueda = '';
+    this.errorBusqueda = false;
     this.vuelosEncontrados = [];
 
     if (!this.origenId || !this.destinoId || !this.fechaSalida) {
       this.mensajeBusqueda = 'Selecciona origen, destino y fecha de salida.';
+      this.errorBusqueda = true;
       return;
     }
 
     if (this.origenId === this.destinoId) {
       this.mensajeBusqueda = 'El origen y destino no pueden ser iguales.';
+      this.errorBusqueda = true;
+      return;
+    }
+
+    if (this.fechaSalida < this.minFecha) {
+      this.mensajeBusqueda = 'No se permiten fechas pasadas.';
+      this.errorBusqueda = true;
       return;
     }
 
     if (this.fechaRegreso && this.fechaRegreso < this.fechaSalida) {
       this.mensajeBusqueda = 'La fecha de regreso no puede ser menor que la fecha de salida.';
+      this.errorBusqueda = true;
       return;
     }
 
-    const origen = this.aeropuertos.find(a => a.aeropuertoId === this.origenId);
-    const destino = this.aeropuertos.find(a => a.aeropuertoId === this.destinoId);
+    this.buscando = true;
 
-    this.vuelosEncontrados = [
-      {
-        vueloId: 1,
-        rutaId: 1,
-        avionId: 1,
-        numeroVuelo: 'BV-101',
-        fechaSalidaProgramada: `${this.fechaSalida}T08:30:00`,
-        fechaLlegadaProgramada: `${this.fechaSalida}T10:15:00`,
-        estado: 'Disponible',
-        activo: true,
-        ruta: {
-          rutaId: 1,
-          aeropuertoOrigenId: this.origenId,
-          aeropuertoDestinoId: this.destinoId,
-          distanciaKm: 450,
-          duracionMinutos: 105,
-          aeropuertoOrigen: origen,
-          aeropuertoDestino: destino
+    const url =
+      `${this.apiUrl}/ClienteBooking/vuelos-disponibles` +
+      `?origenId=${this.origenId}` +
+      `&destinoId=${this.destinoId}` +
+      `&fechaSalida=${this.fechaSalida}`;
+
+    console.log('Buscando vuelos en:', url);
+
+    try {
+      const controller = new AbortController();
+
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 10000);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
         },
-        avion: {
-          avionId: 1,
-          modelo: 'Airbus A320',
-          matricula: 'HC-BV101'
-        }
-      }
-    ];
+        signal: controller.signal
+      });
 
-    this.mensajeBusqueda = `Se encontraron ${this.vuelosEncontrados.length} vuelo(s) disponibles.`;
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        this.errorBusqueda = true;
+        this.mensajeBusqueda = `Error de API: ${response.status}`;
+        return;
+      }
+
+      const data = await response.json();
+
+      console.log('Respuesta vuelos:', data);
+
+      this.vuelosEncontrados = Array.isArray(data) ? data : [];
+
+      if (this.vuelosEncontrados.length === 0) {
+        this.mensajeBusqueda = 'No hay vuelos reales disponibles para esa ruta y fecha.';
+        this.errorBusqueda = false;
+        return;
+      }
+
+      this.mensajeBusqueda = `Se encontraron ${this.vuelosEncontrados.length} vuelo(s) disponibles.`;
+    } catch (error) {
+      console.error('Error buscando vuelos:', error);
+      this.errorBusqueda = true;
+      this.mensajeBusqueda = 'No se pudo obtener la respuesta de vuelos desde la API.';
+    } finally {
+      this.buscando = false;
+      this.cdr.detectChanges();
+    }
   }
-    seleccionarVuelo(vuelo: any) {
-    this.vueloSeleccionado.emit(vuelo);
+
+  seleccionarVuelo(vuelo: Vuelo) {
+    this.vueloSeleccionado.emit({
+      ...vuelo,
+      pasajeros: this.pasajeros,
+      fechaRegreso: this.fechaRegreso,
+      clase: this.clase
+    });
   }
 }
+
+
+

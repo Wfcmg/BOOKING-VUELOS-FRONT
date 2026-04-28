@@ -20,22 +20,9 @@ export class App {
   vueloSeleccionado: any = null;
 
   constructor(public authService: AuthService) {
-    const vistaGuardada = typeof window !== 'undefined' ? window.localStorage.getItem('booking_vistaActual') : null;
-    const vueloGuardado = typeof window !== 'undefined' ? window.localStorage.getItem('booking_vueloSeleccionado') : null;
-
     if (this.authService.obtenerRol() === 'ADMIN') {
       this.vistaActual = 'admin';
-      return;
     }
-
-    if (vistaGuardada === 'booking' && vueloGuardado) {
-      this.vistaActual = 'booking';
-    if (typeof window !== 'undefined') window.localStorage.setItem('booking_vistaActual', 'booking');
-      this.vueloSeleccionado = JSON.parse(vueloGuardado);
-      return;
-    }
-
-    this.vistaActual = 'home';
   }
 
   abrirLogin() {
@@ -53,7 +40,6 @@ export class App {
 
   iniciarFlujoReserva(vuelo: any) {
     this.vueloSeleccionado = vuelo;
-    if (typeof window !== 'undefined') window.localStorage.setItem('booking_vueloSeleccionado', JSON.stringify(vuelo));
 
     if (!this.authService.estaLogueado()) {
       this.abrirLogin();
@@ -66,7 +52,6 @@ export class App {
     }
 
     this.vistaActual = 'booking';
-    if (typeof window !== 'undefined') window.localStorage.setItem('booking_vistaActual', 'booking');
   }
 
   abrirMisViajes() {
@@ -89,27 +74,18 @@ export class App {
 
   volverHomeDesdeBooking() {
     this.vistaActual = 'home';
-    if (typeof window !== 'undefined') window.localStorage.removeItem('booking_vistaActual');
-    if (typeof window !== 'undefined') window.localStorage.removeItem('booking_vueloSeleccionado');
-    if (typeof window !== 'undefined') window.localStorage.removeItem('booking_flow_estado');
   }
 
   cerrarSesion() {
     this.authService.logout();
     this.vistaActual = 'home';
     this.vueloSeleccionado = null;
-    if (typeof window !== 'undefined') window.localStorage.removeItem('booking_vistaActual');
-    if (typeof window !== 'undefined') window.localStorage.removeItem('booking_vueloSeleccionado');
-    if (typeof window !== 'undefined') window.localStorage.removeItem('booking_flow_estado');
   }
 
   salirAdmin() {
     this.authService.logout();
     this.vistaActual = 'home';
     this.vueloSeleccionado = null;
-    if (typeof window !== 'undefined') window.localStorage.removeItem('booking_vistaActual');
-    if (typeof window !== 'undefined') window.localStorage.removeItem('booking_vueloSeleccionado');
-    if (typeof window !== 'undefined') window.localStorage.removeItem('booking_flow_estado');
   }
 
   scrollABusqueda() {
@@ -117,6 +93,4 @@ export class App {
     el?.scrollIntoView({ behavior: 'smooth' });
   }
 }
-
-
 

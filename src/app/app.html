@@ -1,14 +1,16 @@
-@if (vistaActual === 'admin') {
+﻿@if (vistaActual === 'admin') {
   <app-admin-dashboard (salirAdmin)="salirAdmin()"></app-admin-dashboard>
 } @else if (vistaActual === 'booking') {
   <app-booking-flow
     [vuelo]="vueloSeleccionado"
     (volverHome)="volverHomeDesdeBooking()">
   </app-booking-flow>
+} @else if (vistaActual === 'mis-viajes') {
+  <app-mis-viajes (volverHome)="irHome()"></app-mis-viajes>
 } @else {
   <header class="topbar">
     <div class="container topbar-inner">
-      <div class="brand">
+      <div class="brand" (click)="irHome()">
         <div class="brand-icon">✈</div>
         <div class="brand-text">
           <h1>Booking</h1>
@@ -17,9 +19,9 @@
       </div>
 
       <nav class="nav-links">
-        <a href="#">Descubre</a>
-        <a href="#">Mis viajes</a>
-        <a href="#">Centro de ayuda</a>
+        <button type="button" (click)="scrollABusqueda()">Descubre</button>
+        <button type="button" (click)="abrirMisViajes()">Mis viajes</button>
+        <button type="button" (click)="scrollABusqueda()">Centro de ayuda</button>
       </nav>
 
       @if (!authService.estaLogueado()) {
@@ -66,7 +68,7 @@
           <p>Rutas populares con precios increíbles para tu próximo viaje.</p>
         </div>
 
-        <a href="#" class="see-all">Ver todas</a>
+        <button type="button" class="see-all" (click)="scrollABusqueda()">Buscar vuelos</button>
       </div>
 
       <div class="offers-grid">
@@ -78,7 +80,7 @@
             <p>Vuelo rápido ideal para escapadas o viajes de trabajo.</p>
             <div class="offer-footer">
               <strong>Desde $59</strong>
-              <button>Reservar</button>
+              <button type="button" (click)="scrollABusqueda()">Reservar</button>
             </div>
           </div>
         </article>
@@ -91,7 +93,7 @@
             <p>Conecta con una de las ciudades más vibrantes de la región.</p>
             <div class="offer-footer">
               <strong>Desde $129</strong>
-              <button>Reservar</button>
+              <button type="button" (click)="scrollABusqueda()">Reservar</button>
             </div>
           </div>
         </article>
@@ -104,13 +106,14 @@
             <p>Explora gastronomía, cultura y experiencias únicas.</p>
             <div class="offer-footer">
               <strong>Desde $149</strong>
-              <button>Reservar</button>
+              <button type="button" (click)="scrollABusqueda()">Reservar</button>
             </div>
           </div>
         </article>
       </div>
     </div>
   </section>
+
   @if (mostrarLogin) {
     <div class="login-modal">
       <div class="login-backdrop" (click)="cerrarLogin()"></div>
@@ -122,3 +125,4 @@
     </div>
   }
 }
+

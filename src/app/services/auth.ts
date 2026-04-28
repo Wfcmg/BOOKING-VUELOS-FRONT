@@ -68,14 +68,19 @@ export class AuthService {
     return !!localStorage.getItem('token');
   }
 
+  obtenerToken(): string {
+    if (!this.isBrowser()) return '';
+    return localStorage.getItem('token') || '';
+  }
+
+  obtenerUsuarioAppId(): number {
+    if (!this.isBrowser()) return 0;
+    return Number(localStorage.getItem('usuarioAppId') || 0);
+  }
+
   obtenerNombreUsuario(): string {
     if (!this.isBrowser()) return 'Usuario';
-
-    return (
-      localStorage.getItem('nombreCompleto') ||
-      localStorage.getItem('userName') ||
-      'Usuario'
-    );
+    return localStorage.getItem('nombreCompleto') || localStorage.getItem('userName') || 'Usuario';
   }
 
   obtenerRol(): string {
@@ -85,7 +90,6 @@ export class AuthService {
 
   logout(): void {
     if (!this.isBrowser()) return;
-
     localStorage.removeItem('token');
     localStorage.removeItem('usuarioAppId');
     localStorage.removeItem('userName');
@@ -93,3 +97,4 @@ export class AuthService {
     localStorage.removeItem('rol');
   }
 }
+

@@ -226,7 +226,6 @@ export class BookingFlow implements OnChanges {
 
     if (this.pasoActual < this.pasos.length) {
       this.pasoActual++;
-      this.guardarEstadoTemporal();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
@@ -234,7 +233,6 @@ export class BookingFlow implements OnChanges {
   pasoAnterior() {
     if (this.pasoActual > 1 && !this.procesando) {
       this.pasoActual--;
-      this.guardarEstadoTemporal();
       this.mensaje = '';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -357,41 +355,5 @@ export class BookingFlow implements OnChanges {
   get avionModelo(): string {
     return this.vuelo?.avion?.modelo || this.vuelo?.nombreAvion || 'Avión asignado';
   }
-
-  guardarEstadoTemporal() {
-    try {
-      const estado = {
-        pasoActual: (this as any).pasoActual,
-        pasajeros: (this as any).pasajeros,
-        equipajes: (this as any).equipajes,
-        datosFacturacion: (this as any).datosFacturacion,
-        resultadoReserva: (this as any).resultadoReserva
-      };
-
-      if (typeof window !== 'undefined') window.localStorage.setItem('booking_flow_estado', JSON.stringify(estado));
-    } catch (error) {
-      console.warn('No se pudo guardar el estado temporal:', error);
-    }
-  }
-
-  restaurarEstadoTemporal() {
-    try {
-      const raw = typeof window !== 'undefined' ? window.localStorage.getItem('booking_flow_estado') : null;
-      if (!raw) return;
-
-      const estado = JSON.parse(raw);
-
-      if (estado.pasoActual) (this as any).pasoActual = estado.pasoActual;
-      if (estado.pasajeros) (this as any).pasajeros = estado.pasajeros;
-      if (estado.equipajes) (this as any).equipajes = estado.equipajes;
-      if (estado.datosFacturacion) (this as any).datosFacturacion = estado.datosFacturacion;
-      if (estado.resultadoReserva) (this as any).resultadoReserva = estado.resultadoReserva;
-    } catch (error) {
-      console.warn('No se pudo restaurar el estado temporal:', error);
-    }
-  }
 }
-
-
-
 

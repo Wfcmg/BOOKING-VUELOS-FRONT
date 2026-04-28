@@ -1,0 +1,49 @@
+﻿<section class="trips-page">
+  <div class="trips-header">
+    <button type="button" (click)="volver()">â† Volver</button>
+    <div>
+      <span>Cliente</span>
+      <h1>Mis viajes</h1>
+      <p>Aquí aparecen las reservas registradas con tu usuario.</p>
+    </div>
+  </div>
+
+  <div class="message" *ngIf="mensaje">{{ mensaje }}</div>
+  <div class="message" *ngIf="cargando">Cargando viajes...</div>
+
+  <div class="trips-list" *ngIf="viajes.length > 0">
+    <article class="trip-card" *ngFor="let viaje of viajes">
+      <div class="trip-route">
+        <strong>{{ viaje.vuelo?.origenCodigo }} → {{ viaje.vuelo?.destinoCodigo }}</strong>
+        <span>{{ viaje.vuelo?.origenCiudad }} a {{ viaje.vuelo?.destinoCiudad }}</span>
+      </div>
+
+      <div class="trip-info">
+        <p><strong>Código:</strong> {{ viaje.codigoReserva }}</p>
+        <p><strong>Vuelo:</strong> {{ viaje.vuelo?.numeroVuelo }}</p>
+        <p><strong>Salida:</strong> {{ viaje.vuelo?.fechaSalidaProgramada | date:'dd/MM/yyyy HH:mm' }}</p>
+        <p><strong>Estado:</strong> {{ viaje.estado }}</p>
+        <p><strong>Factura:</strong> {{ viaje.factura?.numeroFactura || 'Pendiente' }}</p>
+        <p><strong>Total:</strong> ${{ viaje.total }}</p>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Pasajero</th>
+            <th>Documento</th>
+            <th>Asiento</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of viaje.pasajeros">
+            <td>{{ p.nombres }} {{ p.apellidos }}</td>
+            <td>{{ p.numeroDocumento }}</td>
+            <td>{{ p.numeroAsiento }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+  </div>
+</section>
+

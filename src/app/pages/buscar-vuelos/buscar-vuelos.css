@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
   width: 100%;
 }
@@ -326,7 +326,7 @@
   }
 
   .flight-main {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
   .flight-action {
@@ -351,3 +351,4 @@
     display: none;
   }
 }
+

@@ -1,0 +1,43 @@
+﻿import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, timeout } from 'rxjs';
+
+export interface ConfirmarReservaClienteRequest {
+  usuarioAppId: number;
+  vueloId: number;
+  clase: string;
+  precioBase: number;
+  impuestos: number;
+  equipajeTotal: number;
+  datosFacturacion: any;
+  pasajeros: any[];
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class BookingClienteService {
+  private apiUrl = 'http://localhost:5123/api';
+
+  constructor(private http: HttpClient) {}
+
+  listarAeropuertos(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/Aeropuertos`);
+  }
+
+  buscarVuelos(origenId: number, destinoId: number, fechaSalida: string): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.apiUrl}/ClienteBooking/vuelos-disponibles?origenId=${origenId}&destinoId=${destinoId}&fechaSalida=${fechaSalida}`
+    );
+  }
+
+  confirmarReserva(request: ConfirmarReservaClienteRequest): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/ClienteBooking/confirmar-reserva`, request);
+  }
+
+  misViajes(usuarioAppId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/ClienteBooking/mis-viajes/${usuarioAppId}`);
+  }
+}
+
+
