@@ -227,7 +227,7 @@ export class BookingFlow implements OnChanges {
     if (this.pasoActual < this.pasos.length) {
       this.pasoActual++;
       this.guardarEstadoTemporal();
-      setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
@@ -236,7 +236,7 @@ export class BookingFlow implements OnChanges {
       this.pasoActual--;
       this.guardarEstadoTemporal();
       this.mensaje = '';
-      setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
@@ -298,7 +298,7 @@ export class BookingFlow implements OnChanges {
         try {
           if (typeof window !== 'undefined') {
             window.localStorage.removeItem('booking_flow_estado');
-            setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }
         } catch {}
       },
@@ -400,7 +400,6 @@ export class BookingFlow implements OnChanges {
     }
   }
 }
-
 
 
 
