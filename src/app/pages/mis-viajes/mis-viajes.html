@@ -1,49 +1,242 @@
 ﻿<section class="trips-page">
   <div class="trips-header">
-    <button type="button" (click)="volver()">â† Volver</button>
+    <button type="button" class="back-btn" (click)="volver()">&#8592; Volver</button>
+
     <div>
       <span>Cliente</span>
       <h1>Mis viajes</h1>
-      <p>Aquí aparecen las reservas registradas con tu usuario.</p>
+      <p>Consulta tus reservas, facturas, pagos y boletos generados.</p>
     </div>
   </div>
 
-  <div class="message" *ngIf="mensaje">{{ mensaje }}</div>
-  <div class="message" *ngIf="cargando">Cargando viajes...</div>
+  <div class="message" [class.error]="tipoMensaje === 'error'" [class.ok]="tipoMensaje === 'ok'" *ngIf="mensaje">
+    {{ mensaje }}
+  </div>
 
-  <div class="trips-list" *ngIf="viajes.length > 0">
-    <article class="trip-card" *ngFor="let viaje of viajes">
-      <div class="trip-route">
-        <strong>{{ viaje.vuelo?.origenCodigo }} → {{ viaje.vuelo?.destinoCodigo }}</strong>
-        <span>{{ viaje.vuelo?.origenCiudad }} a {{ viaje.vuelo?.destinoCiudad }}</span>
+  <div class="message" *ngIf="cargando">
+    Cargando viajes...
+  </div>
+
+  <div class="tabs" *ngIf="!cargando">
+    <button
+      type="button"
+      [class.active]="pestanaActiva === 'reservas'"
+      (click)="cambiarPestana('reservas')">
+      Mis Reservas
+    </button>
+
+    <button
+      type="button"
+      [class.active]="pestanaActiva === 'boletos'"
+      (click)="cambiarPestana('boletos')">
+      Mis Boletos
+    </button>
+  </div>
+
+  <div class="empty-state" *ngIf="!cargando && viajes.length === 0">
+    <strong>No hay viajes todav&iacute;a</strong>
+    <p>Cuando confirmes una reserva, aparecer&aacute; aqu&iacute; con su factura y boleto.</p>
+  </div>
+
+  <div class="reservas-list" *ngIf="!cargando && pestanaActiva === 'reservas' && viajes.length > 0">
+    <article class="reserva-card" *ngFor="let viaje of viajes">
+      <div class="reserva-main">
+        <div>
+          <span class="mini-label">Ruta</span>
+          <h2>{{ viaje.vuelo?.origenCodigo }} &#8594; {{ viaje.vuelo?.destinoCodigo }}</h2>
+          <p>{{ viaje.vuelo?.origenCiudad }} a {{ viaje.vuelo?.destinoCiudad }}</p>
+        </div>
+
+        <div class="price-box">
+          <span>Total</span>
+          <strong>${{ total(viaje) | number:'1.2-2' }}</strong>
+        </div>
       </div>
 
-      <div class="trip-info">
-        <p><strong>Código:</strong> {{ viaje.codigoReserva }}</p>
-        <p><strong>Vuelo:</strong> {{ viaje.vuelo?.numeroVuelo }}</p>
-        <p><strong>Salida:</strong> {{ viaje.vuelo?.fechaSalidaProgramada | date:'dd/MM/yyyy HH:mm' }}</p>
-        <p><strong>Estado:</strong> {{ viaje.estado }}</p>
-        <p><strong>Factura:</strong> {{ viaje.factura?.numeroFactura || 'Pendiente' }}</p>
-        <p><strong>Total:</strong> ${{ viaje.total }}</p>
+      <div class="reserva-grid">
+        <div>
+          <span>C&oacute;digo reserva</span>
+          <strong>{{ viaje.codigoReserva }}</strong>
+        </div>
+
+        <div>
+          <span>Vuelo</span>
+          <strong>{{ viaje.vuelo?.numeroVuelo }}</strong>
+        </div>
+
+        <div>
+          <span>Salida</span>
+          <strong>{{ viaje.vuelo?.fechaSalida | date:'dd/MM/yyyy HH:mm' }}</strong>
+        </div>
+
+        <div>
+          <span>Avi&oacute;n</span>
+          <strong>{{ viaje.vuelo?.avion || 'N/D' }}</strong>
+        </div>
+
+        <div>
+          <span>Pago</span>
+          <strong [class.estado-ok]="estaPagado(viaje)">
+            {{ textoEstadoPago(viaje) }}
+          </strong>
+        </div>
+
+        <div>
+          <span>Factura</span>
+          <strong>
+            {{ viaje.factura?.numeroFactura || 'Pendiente' }}
+          </strong>
+        </div>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Pasajero</th>
-            <th>Documento</th>
-            <th>Asiento</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let p of viaje.pasajeros">
-            <td>{{ p.nombres }} {{ p.apellidos }}</td>
-            <td>{{ p.numeroDocumento }}</td>
-            <td>{{ p.numeroAsiento }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="factura-box" *ngIf="viaje.factura">
+        <div>
+          <span>Factura #{{ viaje.factura?.facturaId }}</span>
+          <strong>{{ viaje.factura?.numeroFactura }}</strong>
+        </div>
+
+        <span class="estado-pill" [ngClass]="claseEstadoFactura(viaje)">
+          {{ textoEstadoFactura(viaje) }}
+        </span>
+      </div>
+
+      <div class="pasajeros-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Pasajero</th>
+              <th>Documento</th>
+              <th>Asiento</th>
+              <th>Boleto</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let p of viaje.pasajeros">
+              <td>{{ p.nombres }} {{ p.apellidos }}</td>
+              <td>{{ p.numeroDocumento }}</td>
+              <td>
+                <strong class="seat-code">{{ p.numeroAsiento || 'N/D' }}</strong>
+              </td>
+              <td>{{ p.boleto?.numeroBoleto || 'Pendiente' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button
+          type="button"
+          class="primary"
+          *ngIf="!estaPagado(viaje)"
+          (click)="pagar(viaje)">
+          Pagar
+        </button>
+
+        <button
+          type="button"
+          class="outline"
+          *ngIf="!facturaEmitida(viaje)"
+          (click)="gestionarEquipaje(viaje)">
+          Gestionar equipaje
+        </button>
+
+        <span class="locked-note" *ngIf="facturaEmitida(viaje)">
+          Factura emitida: equipaje bloqueado
+        </span>
+      </div>
     </article>
   </div>
-</section>
 
+  <div class="boletos-grid" *ngIf="!cargando && pestanaActiva === 'boletos' && boletos.length > 0">
+    <article class="boarding-pass" *ngFor="let item of boletos">
+      <aside class="boarding-side">
+        <span>BOARDING PASS</span>
+        <strong>&#9992;</strong>
+      </aside>
+
+      <div class="boarding-body">
+        <div class="boarding-top">
+          <span class="class-pill">
+            CLASE {{ item.viaje?.clase || 'ECONOMICA' }}
+          </span>
+
+          <div>
+            <span class="mini-label">BOLETO</span>
+            <strong>{{ item.boleto?.numeroBoleto }}</strong>
+          </div>
+        </div>
+
+        <div class="boarding-route">
+          <div>
+            <span>ORIGEN</span>
+            <strong>{{ item.viaje?.vuelo?.origenCodigo }}</strong>
+            <small>{{ item.viaje?.vuelo?.origenCiudad }}</small>
+          </div>
+
+          <div class="plane-line">&#9992;</div>
+
+          <div>
+            <span>DESTINO</span>
+            <strong>{{ item.viaje?.vuelo?.destinoCodigo }}</strong>
+            <small>{{ item.viaje?.vuelo?.destinoCiudad }}</small>
+          </div>
+        </div>
+
+        <div class="boarding-details">
+          <div>
+            <span>VUELO</span>
+            <strong>{{ item.viaje?.vuelo?.numeroVuelo }}</strong>
+          </div>
+
+          <div>
+            <span>ASIENTO</span>
+            <strong class="seat-highlight">{{ item.pasajero?.numeroAsiento }}</strong>
+          </div>
+
+          <div>
+            <span>RESERVA</span>
+            <strong>{{ item.viaje?.codigoReserva }}</strong>
+          </div>
+
+          <div>
+            <span>ESTADO</span>
+            <strong class="estado-ok">{{ item.boleto?.estadoBoleto }}</strong>
+          </div>
+
+          <div>
+            <span>PASAJERO</span>
+            <strong>{{ item.pasajero?.nombres }} {{ item.pasajero?.apellidos }}</strong>
+          </div>
+
+          <div>
+            <span>FACTURA</span>
+            <strong>{{ item.viaje?.factura?.numeroFactura || 'Pendiente' }}</strong>
+          </div>
+        </div>
+
+        <div class="boarding-footer">
+          <button type="button" (click)="descargarBoleto(item)">
+            Descargar boleto
+          </button>
+
+          <span>
+            E-ticket: {{ item.boleto?.eTicket || item.boleto?.ETicket || item.boleto?.eticket }}
+          </span>
+        </div>
+      </div>
+
+      <div class="boarding-qr">
+        <div class="fake-qr">
+          <span>{{ qrTexto(item) }}</span>
+        </div>
+        <small>ESCAN&Eacute;AME</small>
+      </div>
+    </article>
+  </div>
+
+  <div class="empty-state" *ngIf="!cargando && pestanaActiva === 'boletos' && boletos.length === 0">
+    <strong>No hay boletos generados</strong>
+    <p>Cuando una reserva se confirme, el boleto aparecer&aacute; aqu&iacute;.</p>
+  </div>
+</section>

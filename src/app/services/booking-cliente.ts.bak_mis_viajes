@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, timeout } from 'rxjs';
 
 export interface ConfirmarReservaClienteRequest {
   usuarioAppId: number;
@@ -39,3 +39,5 @@ export class BookingClienteService {
     return this.http.get<any[]>(`${this.apiUrl}/ClienteBooking/mis-viajes/${usuarioAppId}`);
   }
 }
+
+
