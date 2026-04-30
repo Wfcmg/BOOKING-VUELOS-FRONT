@@ -139,17 +139,9 @@
                 [class.selected]="pasajeros[0]?.numeroAsiento === asiento.numero || asientoSeleccionadoPorOtro(pasajeros[0], asiento.numero)"
                 [class.blocked]="asiento.ocupado"
                 [disabled]="asiento.ocupado"
-                [title]="asiento.ocupado ? 'Asiento ocupado' : 'Asiento disponible'"
-                (click)="seleccionarAsiento(pasajeros[0], asiento)"
               >
                 {{ asiento.numero }}
               </button>
-            </div>
-
-            <div class="seat-legend">
-              <span><i class="free"></i> Libre</span>
-              <span><i class="chosen"></i> Seleccionado</span>
-              <span><i class="busy"></i> Ocupado</span>
             </div>
           </div>
 
@@ -163,7 +155,7 @@
                   [value]="asiento.numero"
                   [disabled]="asiento.ocupado || asientoSeleccionadoPorOtro(p, asiento.numero)"
                 >
-                  {{ asiento.numero }} {{ asiento.ocupado ? '(ocupado)' : '' }}
+                  {{ asiento.numero }}
                 </option>
               </select>
               <span *ngIf="p.numeroAsiento">Asignado: {{ p.numeroAsiento }}</span>
@@ -357,7 +349,5 @@
     </div>
   </section>
 </section>
-
-
 
 

@@ -1,5 +1,5 @@
 ﻿import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth';
 import { BookingClienteService } from '../services/booking-cliente';
@@ -20,11 +20,6 @@ interface PasajeroForm {
   equipajePrecio: number;
 }
 
-interface AsientoMapa {
-  numero: string;
-  ocupado: boolean;
-}
-
 @Component({
   selector: 'app-booking-flow',
   imports: [CommonModule, FormsModule],
@@ -41,8 +36,7 @@ export class BookingFlow implements OnChanges {
   procesando = false;
 
   pasajeros: PasajeroForm[] = [];
-  asientos: AsientoMapa[] = this.generarAsientos();
-  asientosOcupados: string[] = [];
+  asientos = this.generarAsientos();
 
   datosFacturacion = {
     tipoDocumento: 'CEDULA',
@@ -69,13 +63,12 @@ export class BookingFlow implements OnChanges {
     { numero: 3, titulo: 'Equipaje' },
     { numero: 4, titulo: 'Resumen' },
     { numero: 5, titulo: 'Pago' },
-    { numero: 6, titulo: 'Confirmacion' }
+    { numero: 6, titulo: 'Confirmación' }
   ];
 
   constructor(
     private authService: AuthService,
-    private bookingService: BookingClienteService,
-    private cd: ChangeDetectorRef
+    private bookingService: BookingClienteService
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -84,9 +77,8 @@ export class BookingFlow implements OnChanges {
     }
   }
 
-  inicializarPasajeros(): void {
+  inicializarPasajeros() {
     const cantidad = Number(this.vuelo?.pasajeros || 1);
-
     this.pasajeros = Array.from({ length: cantidad }, () => ({
       nombres: '',
       apellidos: '',
@@ -102,94 +94,29 @@ export class BookingFlow implements OnChanges {
       equipajePesoKg: 0,
       equipajePrecio: 0
     }));
-
-    this.asientos = this.generarAsientos();
-    this.cargarAsientosOcupados();
   }
 
-  generarAsientos(): AsientoMapa[] {
+  generarAsientos() {
     const letras = ['A', 'B', 'C', 'D'];
-    const lista: AsientoMapa[] = [];
-
+    const lista: any[] = [];
     for (let fila = 1; fila <= 12; fila++) {
       for (const letra of letras) {
         lista.push({ numero: `${fila}${letra}`, ocupado: false });
       }
     }
-
     return lista;
   }
 
-  async cargarAsientosOcupados(): Promise<void> {
-    const vueloId = Number(this.vuelo?.vueloId || 0);
-
-    this.asientosOcupados = [];
-
-    if (!vueloId) {
-      this.marcarAsientosOcupados();
-      return;
-    }
-
-    try {
-      const respuesta = await fetch(`http://localhost:5123/api/ClienteBooking/asientos-ocupados/${vueloId}`, {
-        method: 'GET',
-        cache: 'no-store'
-      });
-
-      if (!respuesta.ok) {
-        throw new Error(`Error HTTP ${respuesta.status}`);
-      }
-
-      const data = await respuesta.json();
-
-      this.asientosOcupados = Array.isArray(data)
-        ? data.map((x: any) => String(x).trim().toUpperCase())
-        : [];
-
-      this.marcarAsientosOcupados();
-    } catch (error) {
-      console.error('No se pudieron cargar asientos ocupados:', error);
-      this.asientosOcupados = [];
-      this.marcarAsientosOcupados();
-    }
-  }
-
-  marcarAsientosOcupados(): void {
-    this.asientos = this.asientos.map(asiento => ({
-      ...asiento,
-      ocupado: this.asientosOcupados.includes(String(asiento.numero).trim().toUpperCase())
-    }));
-
-    for (const p of this.pasajeros) {
-      const asientoActual = String(p.numeroAsiento || '').trim().toUpperCase();
-
-      if (asientoActual && this.asientosOcupados.includes(asientoActual)) {
-        p.numeroAsiento = '';
-      }
-    }
-  }
-
-  seleccionarAsiento(pasajero: PasajeroForm, asiento: AsientoMapa): void {
-    if (asiento.ocupado) {
-      this.error(`El asiento ${asiento.numero} ya esta ocupado. Selecciona otro.`);
-      return;
-    }
-
-    if (this.asientoSeleccionadoPorOtro(pasajero, asiento.numero)) {
-      this.error(`El asiento ${asiento.numero} ya fue seleccionado por otro pasajero.`);
-      return;
-    }
-
-    this.mensaje = '';
+  seleccionarAsiento(pasajero: PasajeroForm, asiento: any) {
+    if (asiento.ocupado || this.asientoSeleccionadoPorOtro(pasajero, asiento.numero)) return;
     pasajero.numeroAsiento = asiento.numero;
-    this.guardarEstadoTemporal();
   }
 
   asientoSeleccionadoPorOtro(pasajeroActual: PasajeroForm, asiento: string): boolean {
     return this.pasajeros.some(p => p !== pasajeroActual && p.numeroAsiento === asiento);
   }
 
-  actualizarEquipaje(p: PasajeroForm): void {
+  actualizarEquipaje(p: PasajeroForm) {
     if (p.equipajeTipo === 'Sin equipaje extra') {
       p.equipajeCantidad = 0;
       p.equipajePesoKg = 0;
@@ -220,7 +147,7 @@ export class BookingFlow implements OnChanges {
   }
 
   validarPasajeros(): boolean {
-    const nombreRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
+    const nombreRegex = /^[A-Za-zÃÃ‰ÃÃ“ÃšáéíóúÑñ\s]+$/;
     const docRegex = /^[0-9A-Za-z\-]{5,20}$/;
 
     for (let i = 0; i < this.pasajeros.length; i++) {
@@ -231,11 +158,11 @@ export class BookingFlow implements OnChanges {
       }
 
       if (!nombreRegex.test(p.nombres.trim()) || !nombreRegex.test(p.apellidos.trim())) {
-        return this.error(`El pasajero ${i + 1} tiene nombres o apellidos invalidos.`);
+        return this.error(`El pasajero ${i + 1} tiene nombres o apellidos inválidos.`);
       }
 
       if (!docRegex.test(p.numeroDocumento.trim())) {
-        return this.error(`El documento del pasajero ${i + 1} no es valido.`);
+        return this.error(`El documento del pasajero ${i + 1} no es válido.`);
       }
 
       if (p.fechaNacimiento >= new Date().toISOString().slice(0, 10)) {
@@ -257,12 +184,6 @@ export class BookingFlow implements OnChanges {
       return this.error('No puedes repetir el mismo asiento para dos pasajeros.');
     }
 
-    const ocupado = asientos.find(a => this.asientosOcupados.includes(String(a).trim().toUpperCase()));
-
-    if (ocupado) {
-      return this.error(`El asiento ${ocupado} ya esta ocupado. Selecciona otro.`);
-    }
-
     return true;
   }
 
@@ -270,21 +191,21 @@ export class BookingFlow implements OnChanges {
     const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!this.datosFacturacion.rucCedula.trim() || !this.datosFacturacion.direccion.trim() || !this.datosFacturacion.ciudad.trim()) {
-      return this.error('Completa cedula/RUC, direccion y ciudad para facturacion.');
+      return this.error('Completa cédula/RUC, dirección y ciudad para facturación.');
     }
 
     if (!correoRegex.test(this.datosFacturacion.correo.trim())) {
-      return this.error('Ingresa un correo valido para la factura.');
+      return this.error('Ingresa un correo válido para la factura.');
     }
 
     const tarjetaLimpia = this.datosFacturacion.tarjetaNumero.replace(/\s/g, '');
 
     if (!/^[0-9]{13,19}$/.test(tarjetaLimpia)) {
-      return this.error('Ingresa un numero de tarjeta valido para el pago simulado.');
+      return this.error('Ingresa un número de tarjeta válido para el pago simulado.');
     }
 
     if (!/^[0-9]{3,4}$/.test(this.datosFacturacion.tarjetaCvv)) {
-      return this.error('El CVV debe tener 3 o 4 numeros.');
+      return this.error('El CVV debe tener 3 o 4 números.');
     }
 
     if (!this.datosFacturacion.tarjetaNombre.trim() || !this.datosFacturacion.tarjetaVencimiento) {
@@ -295,7 +216,7 @@ export class BookingFlow implements OnChanges {
     return true;
   }
 
-  siguientePaso(): void {
+  siguientePaso() {
     if (!this.validarPasoActual()) return;
 
     if (this.pasoActual === 5) {
@@ -310,7 +231,7 @@ export class BookingFlow implements OnChanges {
     }
   }
 
-  pasoAnterior(): void {
+  pasoAnterior() {
     if (this.pasoActual > 1 && !this.procesando) {
       this.pasoActual--;
       this.guardarEstadoTemporal();
@@ -319,9 +240,9 @@ export class BookingFlow implements OnChanges {
     }
   }
 
-  confirmarReserva(): void {
+  confirmarReserva() {
     if (!this.authService.estaLogueado()) {
-      this.error('Debes iniciar sesion para confirmar la reserva.');
+      this.error('Debes iniciar sesión para confirmar la reserva.');
       return;
     }
 
@@ -347,7 +268,7 @@ export class BookingFlow implements OnChanges {
         metodoPago: 'Tarjeta',
         referenciaPago: this.datosFacturacion.referenciaPago
       },
-      pasajeros: this.pasajeros.map((p: PasajeroForm) => ({
+      pasajeros: this.pasajeros.map(p => ({
         nombres: p.nombres,
         apellidos: p.apellidos,
         fechaNacimiento: p.fechaNacimiento,
@@ -365,7 +286,7 @@ export class BookingFlow implements OnChanges {
     };
 
     this.bookingService.confirmarReserva(request).subscribe({
-      next: (resp: any) => {
+      next: (resp) => {
         console.log('Reserva confirmada OK:', resp);
 
         this.procesando = false;
@@ -373,7 +294,6 @@ export class BookingFlow implements OnChanges {
         this.tipoMensaje = 'ok';
         this.mensaje = 'Reserva confirmada correctamente.';
         this.pasoActual = 6;
-        this.cd.detectChanges();
 
         try {
           if (typeof window !== 'undefined') {
@@ -382,10 +302,9 @@ export class BookingFlow implements OnChanges {
           }
         } catch {}
       },
-      error: (err: any) => {
+      error: (err) => {
         this.procesando = false;
         this.error(err?.error?.mensaje || 'No se pudo confirmar la reserva.');
-        this.cd.detectChanges();
       }
     });
   }
@@ -396,7 +315,7 @@ export class BookingFlow implements OnChanges {
     return false;
   }
 
-  volver(): void {
+  volver() {
     this.volverHome.emit();
   }
 
@@ -445,40 +364,45 @@ export class BookingFlow implements OnChanges {
   }
 
   get avionModelo(): string {
-    return this.vuelo?.avion?.modelo || this.vuelo?.nombreAvion || 'Avion asignado';
+    return this.vuelo?.avion?.modelo || this.vuelo?.nombreAvion || 'Avión asignado';
   }
 
-  guardarEstadoTemporal(): void {
+  guardarEstadoTemporal() {
     try {
       const estado = {
-        pasoActual: this.pasoActual,
-        pasajeros: this.pasajeros,
-        datosFacturacion: this.datosFacturacion,
-        confirmacion: this.confirmacion
+        pasoActual: (this as any).pasoActual,
+        pasajeros: (this as any).pasajeros,
+        equipajes: (this as any).equipajes,
+        datosFacturacion: (this as any).datosFacturacion,
+        resultadoReserva: (this as any).resultadoReserva
       };
 
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('booking_flow_estado', JSON.stringify(estado));
-      }
+      if (typeof window !== 'undefined') window.localStorage.setItem('booking_flow_estado', JSON.stringify(estado));
     } catch (error) {
       console.warn('No se pudo guardar el estado temporal:', error);
     }
   }
 
-  restaurarEstadoTemporal(): void {
+  restaurarEstadoTemporal() {
     try {
       const raw = typeof window !== 'undefined' ? window.localStorage.getItem('booking_flow_estado') : null;
       if (!raw) return;
 
       const estado = JSON.parse(raw);
 
-      if (estado.pasoActual) this.pasoActual = estado.pasoActual;
-      if (estado.pasajeros) this.pasajeros = estado.pasajeros;
-      if (estado.datosFacturacion) this.datosFacturacion = estado.datosFacturacion;
-      if (estado.confirmacion) this.confirmacion = estado.confirmacion;
+      if (estado.pasoActual) (this as any).pasoActual = estado.pasoActual;
+      if (estado.pasajeros) (this as any).pasajeros = estado.pasajeros;
+      if (estado.equipajes) (this as any).equipajes = estado.equipajes;
+      if (estado.datosFacturacion) (this as any).datosFacturacion = estado.datosFacturacion;
+      if (estado.resultadoReserva) (this as any).resultadoReserva = estado.resultadoReserva;
     } catch (error) {
       console.warn('No se pudo restaurar el estado temporal:', error);
     }
   }
 }
+
+
+
+
+
 

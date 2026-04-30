@@ -8,13 +8,22 @@
       </div>
     </div>
 
-    <nav class="admin-menu">
-      <a class="active">Dashboard</a>
-      <a>Operación aérea</a>
-      <a>Ventas</a>
-      <a>Seguridad</a>
-      <a>Postventa</a>
-    </nav>
+    <div class="side-actions">
+      <button type="button" class="side-btn" [class.active]="!moduloActual" (click)="volverDashboard()">
+        Dashboard
+      </button>
+
+      @if (moduloActual) {
+        <button type="button" class="side-btn active">
+          {{ moduloActual.titulo }}
+        </button>
+      }
+    </div>
+
+    <div class="api-box">
+      <small>API conectada</small>
+      <strong>{{ apiBase }}</strong>
+    </div>
 
     <button class="logout-admin" type="button" (click)="cerrarPanel()">
       Cerrar sesión
@@ -22,39 +31,203 @@
   </aside>
 
   <main class="admin-main">
-    <header class="admin-header">
-      <div>
-        <span class="admin-badge">ADMINISTRADOR</span>
-        <h1>Panel administrativo</h1>
-        <p>Gestiona la operación, ventas, usuarios y control general del sistema.</p>
-      </div>
-    </header>
+    @if (!moduloActual) {
+      <header class="admin-header">
+        <div>
+          <span class="admin-badge">ADMINISTRADOR</span>
+          <h1>Panel administrativo</h1>
+          <p>Gestiona catálogos, vuelos, usuarios y consultas del sistema desde un solo lugar.</p>
+        </div>
+      </header>
 
-    <section class="admin-stats">
-      <article>
-        <strong>24</strong>
-        <span>Módulos activos</span>
-      </article>
+      <section class="admin-stats">
+        <article>
+          <strong>{{ modulos.length }}</strong>
+          <span>Módulos disponibles</span>
+        </article>
 
-      <article>
-        <strong>ADMIN</strong>
-        <span>Rol actual</span>
-      </article>
+        <article>
+          <strong>ADMIN</strong>
+          <span>Rol actual</span>
+        </article>
 
-      <article>
-        <strong>Online</strong>
-        <span>Estado del sistema</span>
-      </article>
-    </section>
+        <article>
+          <strong>Online</strong>
+          <span>Estado del panel</span>
+        </article>
+      </section>
 
-    <section class="modules-grid">
-      <article class="module-card" *ngFor="let modulo of modulos">
-        <div class="module-icon">{{ modulo.icono }}</div>
-        <h3>{{ modulo.titulo }}</h3>
-        <p>{{ modulo.descripcion }}</p>
-        <button type="button">Gestionar</button>
-      </article>
-    </section>
+      <section class="modules-grid">
+        <article class="module-card" *ngFor="let modulo of modulos">
+          <div class="module-icon">{{ modulo.icono }}</div>
+
+          <div class="module-title-row">
+            <h3>{{ modulo.titulo }}</h3>
+            <span [class.readonly]="modulo.modo === 'lectura'">
+              {{ modulo.modo === 'lectura' ? 'Consulta' : 'CRUD' }}
+            </span>
+          </div>
+
+          <p>{{ modulo.descripcion }}</p>
+
+          <button type="button" (click)="seleccionarModulo(modulo)">
+            Gestionar
+          </button>
+        </article>
+      </section>
+    } @else {
+      <section class="crud-panel">
+        <header class="crud-header">
+          <div>
+            <button class="back-btn" type="button" (click)="volverDashboard()">← Dashboard</button>
+            <span class="admin-badge">{{ moduloActual.modo === 'lectura' ? 'MODO CONSULTA' : 'MODO CRUD' }}</span>
+            <h1>{{ moduloActual.icono }} {{ moduloActual.titulo }}</h1>
+            <p>{{ moduloActual.descripcion }}</p>
+          </div>
+
+          <div class="crud-actions">
+            <button type="button" class="secondary-btn" (click)="cargarDatos()" [disabled]="cargando">
+              Refrescar
+            </button>
+
+            @if (moduloActual.modo === 'crud') {
+              <button type="button" class="primary-btn" (click)="abrirNuevo()">
+                Nuevo
+              </button>
+            }
+          </div>
+        </header>
+
+        @if (mensaje) {
+          <div class="alert ok">{{ mensaje }}</div>
+        }
+
+        @if (error) {
+          <div class="alert error">{{ error }}</div>
+        }
+
+        <section class="toolbar">
+          <input
+            type="text"
+            placeholder="Buscar en la tabla..."
+            [(ngModel)]="busqueda"
+            (ngModelChange)="actualizarRegistrosFiltrados()"
+            name="busquedaAdmin"
+          />
+
+          <span>{{ registrosFiltradosCache.length }} registros</span>
+        </section>
+
+        @if (formAbierto && moduloActual.modo === 'crud') {
+          <section class="form-card">
+            <div class="form-title">
+              <h2>{{ modoEdicion ? 'Editar registro' : 'Nuevo registro' }}</h2>
+              <button type="button" class="close-form" (click)="cancelarFormulario()">×</button>
+            </div>
+
+            <form class="admin-form" (ngSubmit)="guardar()">
+              <div class="form-grid">
+                <label *ngFor="let campo of moduloActual.campos">
+                  <span>{{ campo.etiqueta }} <b *ngIf="campo.requerido">*</b></span>
+
+                  <ng-container [ngSwitch]="campo.tipo">
+                    <textarea
+                      *ngSwitchCase="'textarea'"
+                      [(ngModel)]="formulario[campo.nombre]"
+                      [name]="campo.nombre"
+                      rows="3">
+                    </textarea>
+
+                    <select
+                      *ngSwitchCase="'select'"
+                      [(ngModel)]="formulario[campo.nombre]"
+                      [name]="campo.nombre">
+                      <option *ngFor="let opcion of obtenerOpciones(campo)" [ngValue]="opcion.valor">
+                        {{ opcion.texto }}
+                      </option>
+                    </select>
+
+                    <label class="check-row" *ngSwitchCase="'checkbox'">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="formulario[campo.nombre]"
+                        [name]="campo.nombre"
+                      />
+                      <span>{{ formulario[campo.nombre] ? 'Sí' : 'No' }}</span>
+                    </label>
+
+                    <input
+                      *ngSwitchDefault
+                      [type]="campo.tipo"
+                      [(ngModel)]="formulario[campo.nombre]"
+                      [name]="campo.nombre"
+                    />
+                  </ng-container>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="secondary-btn" (click)="cancelarFormulario()">
+                  Cancelar
+                </button>
+
+                <button type="submit" class="primary-btn" [disabled]="guardando">
+                  {{ guardando ? 'Guardando...' : 'Guardar' }}
+                </button>
+              </div>
+            </form>
+          </section>
+        }
+
+        <section class="table-card">
+          @if (cargando) {
+            <div class="loading">Cargando datos...</div>
+          } @else {
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th *ngFor="let columna of moduloActual.columnas">
+                      {{ columna.etiqueta }}
+                    </th>
+                    <th *ngIf="moduloActual.modo === 'crud'">Acciones</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr *ngFor="let registro of registrosFiltradosCache">
+                    <td *ngFor="let columna of moduloActual.columnas">
+                      {{ mostrarValor(registro, columna) }}
+                    </td>
+
+                    <td class="acciones" *ngIf="moduloActual.modo === 'crud'">
+                      <button type="button" class="edit-btn" (click)="editar(registro)">
+                        Editar
+                      </button>
+
+                      <button
+                        *ngIf="moduloActual.estadoCampo && moduloActual.permitirInactivar !== false"
+                        type="button"
+                        class="delete-btn"
+                        (click)="inactivar(registro)">
+                        Inactivar
+                      </button>
+                    </td>
+                  </tr>
+
+                  <tr *ngIf="registrosFiltradosCache.length === 0">
+                    <td [attr.colspan]="moduloActual.columnas.length + 1" class="empty">
+                      No hay registros para mostrar.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+      </section>
+    }
   </main>
 </section>
+
 
