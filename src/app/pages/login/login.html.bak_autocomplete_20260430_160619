@@ -18,23 +18,13 @@
       </button>
     </div>
 
-    @if (mensaje) {
-      <div class="message top-message" [class.ok]="tipoMensaje === 'ok'" [class.error]="tipoMensaje === 'error'">
-        {{ mensaje }}
-      </div>
-    }
-
-    <div class="login-form" autocomplete="off">
+    <div class="login-form">
       <label>Usuario</label>
       <input
         type="text"
-        placeholder="Ej: william123"
+        placeholder="Ej: william"
         [(ngModel)]="userName"
         name="userName"
-        autocomplete="off"
-        autocorrect="off"
-        autocapitalize="off"
-        spellcheck="false"
       />
 
       @if (modo === 'registro') {
@@ -44,13 +34,6 @@
           placeholder="Ej: William Carrion"
           [(ngModel)]="nombreCompleto"
           name="nombreCompleto"
-          maxlength="80"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="words"
-          spellcheck="false"
-          (keydown)="soloLetras($event)"
-          (input)="limpiarNombreCompleto()"
         />
 
         <label>Correo electrónico</label>
@@ -59,10 +42,6 @@
           placeholder="Ej: william@test.com"
           [(ngModel)]="correoElectronico"
           name="correoElectronico"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck="false"
         />
 
         <label>Teléfono</label>
@@ -74,10 +53,7 @@
           maxlength="10"
           inputmode="numeric"
           pattern="[0-9]*"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck="false"
+          autocomplete="tel"
           (keydown)="soloNumeros($event)"
           (input)="limitarTelefono()"
         />
@@ -89,10 +65,6 @@
         placeholder="Ingresa tu contraseña"
         [(ngModel)]="password"
         name="password"
-        autocomplete="new-password"
-        autocorrect="off"
-        autocapitalize="off"
-        spellcheck="false"
       />
 
       @if (modo === 'login') {
@@ -104,6 +76,12 @@
           {{ cargando ? 'Creando cuenta...' : 'Crear cuenta' }}
         </button>
       }
+
+      <p class="message" [class.ok]="tipoMensaje === 'ok'" [class.error]="tipoMensaje === 'error'" *ngIf="mensaje">
+        {{ mensaje }}
+      </p>
     </div>
   </div>
 </section>
+
+

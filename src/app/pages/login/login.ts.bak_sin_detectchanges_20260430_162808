@@ -26,39 +26,15 @@ export class Login {
 
   constructor(
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cd: ChangeDetectorRef
   ) {}
-
-  private refrescarVista() {
-    setTimeout(() => {
-      try {
-        this.cdr.detectChanges();
-      } catch {
-        // Evita romper la pantalla si Angular ya actualizó.
-      }
-    }, 0);
-  }
-
-  private mostrarError(mensaje: string) {
-    this.cargando = false;
-    this.tipoMensaje = 'error';
-    this.mensaje = mensaje;
-    this.refrescarVista();
-  }
-
-  private mostrarOk(mensaje: string) {
-    this.cargando = false;
-    this.tipoMensaje = 'ok';
-    this.mensaje = mensaje;
-    this.refrescarVista();
-  }
 
   cambiarModo(modo: 'login' | 'registro') {
     this.modo = modo;
     this.mensaje = '';
     this.tipoMensaje = 'error';
     this.cargando = false;
-    this.refrescarVista();
+    this.cd.detectChanges();
   }
 
   soloNumeros(event: KeyboardEvent) {
@@ -99,6 +75,40 @@ export class Login {
       .replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]/g, '')
       .replace(/\s+/g, ' ')
       .slice(0, 80);
+  }
+
+  private mostrarError(mensaje: string) {
+    this.cargando = false;
+    this.tipoMensaje = 'error';
+    this.mensaje = mensaje;
+    this.cd.detectChanges();
+  }
+
+  private mostrarOk(mensaje: string) {
+    this.cargando = false;
+    this.tipoMensaje = 'ok';
+    this.mensaje = mensaje;
+    this.cd.detectChanges();
+  }
+
+  private extraerMensajeError(error: any, mensajeDefault: string): string {
+    if (error?.status === 0) {
+      return 'No se pudo conectar con el servidor. Verifica que el backend esté levantado en http://localhost:5123.';
+    }
+
+    if (typeof error?.error === 'string') {
+      return error.error;
+    }
+
+    if (error?.error?.mensaje) {
+      return error.error.mensaje;
+    }
+
+    if (error?.message) {
+      return error.message;
+    }
+
+    return mensajeDefault;
   }
 
   private validarRegistro(): boolean {
@@ -171,7 +181,7 @@ export class Login {
     }
 
     this.cargando = true;
-    this.refrescarVista();
+    this.cd.detectChanges();
 
     this.authService.login({
       userName: this.userName.trim(),
@@ -186,18 +196,15 @@ export class Login {
 
         setTimeout(() => {
           this.loginCorrecto.emit(response.rol);
-        }, 500);
+        }, 700);
       },
       error: (error) => {
-        if (error?.status === 0) {
-          this.mostrarError('No se pudo conectar con el servidor. Verifica que el backend esté levantado.');
-          return;
-        }
-
-        this.mostrarError(
-          error?.error?.mensaje ||
+        const mensaje = this.extraerMensajeError(
+          error,
           'No se encontró el usuario o la contraseña es incorrecta. Si no tienes cuenta, crea una cuenta primero.'
         );
+
+        this.mostrarError(mensaje);
       }
     });
   }
@@ -208,45 +215,26 @@ export class Login {
     if (!this.validarRegistro()) return;
 
     this.cargando = true;
-    this.refrescarVista();
+    this.cd.detectChanges();
 
-    const userNameLogin = this.userName.trim();
-    const passwordLogin = this.password;
-
-    const payload = {
-      userName: userNameLogin,
-      password: passwordLogin,
+    this.authService.register({
+      userName: this.userName.trim(),
+      password: this.password,
       nombreCompleto: this.nombreCompleto.replace(/\s+/g, ' ').trim(),
       correoElectronico: this.correoElectronico.trim(),
       telefono: this.telefono.replace(/\D/g, '').slice(0, 10)
-    };
-
-    this.authService.register(payload).subscribe({
+    }).subscribe({
       next: () => {
-        this.authService.login({
-          userName: userNameLogin,
-          password: passwordLogin
-        }).subscribe({
-          next: (response) => {
-            this.password = '';
-            this.mostrarOk('Cuenta creada correctamente. Iniciando sesión...');
-
-            setTimeout(() => {
-              this.loginCorrecto.emit(response.rol);
-            }, 500);
-          },
-          error: () => {
-            this.mostrarError('La cuenta fue creada, pero no se pudo iniciar sesión automáticamente. Intenta iniciar sesión manualmente.');
-          }
-        });
+        this.password = '';
+        this.mostrarOk('Cuenta creada correctamente. Ahora puedes cambiar a Iniciar sesión y entrar con tu usuario.');
       },
       error: (error) => {
-        if (error?.status === 0) {
-          this.mostrarError('No se pudo conectar con el servidor. Verifica que el backend esté levantado en http://localhost:5123.');
-          return;
-        }
+        const mensaje = this.extraerMensajeError(
+          error,
+          'No se pudo crear la cuenta. Revisa usuario, correo o teléfono.'
+        );
 
-        this.mostrarError(error?.error?.mensaje || 'No se pudo crear la cuenta. Revisa usuario, correo o teléfono.');
+        this.mostrarError(mensaje);
       }
     });
   }

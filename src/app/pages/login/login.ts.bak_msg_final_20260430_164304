@@ -34,7 +34,7 @@ export class Login {
       try {
         this.cdr.detectChanges();
       } catch {
-        // Evita romper la pantalla si Angular ya actualizó.
+        // Evita romper la pantalla si Angular ya refresco la vista.
       }
     }, 0);
   }
@@ -186,7 +186,7 @@ export class Login {
 
         setTimeout(() => {
           this.loginCorrecto.emit(response.rol);
-        }, 500);
+        }, 700);
       },
       error: (error) => {
         if (error?.status === 0) {
@@ -202,7 +202,7 @@ export class Login {
     });
   }
 
-  crearCuenta() {
+  async crearCuenta() {
     this.mensaje = '';
 
     if (!this.validarRegistro()) return;
@@ -210,44 +210,41 @@ export class Login {
     this.cargando = true;
     this.refrescarVista();
 
-    const userNameLogin = this.userName.trim();
-    const passwordLogin = this.password;
-
     const payload = {
-      userName: userNameLogin,
-      password: passwordLogin,
+      userName: this.userName.trim(),
+      password: this.password,
       nombreCompleto: this.nombreCompleto.replace(/\s+/g, ' ').trim(),
       correoElectronico: this.correoElectronico.trim(),
       telefono: this.telefono.replace(/\D/g, '').slice(0, 10)
     };
 
-    this.authService.register(payload).subscribe({
-      next: () => {
-        this.authService.login({
-          userName: userNameLogin,
-          password: passwordLogin
-        }).subscribe({
-          next: (response) => {
-            this.password = '';
-            this.mostrarOk('Cuenta creada correctamente. Iniciando sesión...');
+    try {
+      const response = await fetch('http://localhost:5123/api/Auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
 
-            setTimeout(() => {
-              this.loginCorrecto.emit(response.rol);
-            }, 500);
-          },
-          error: () => {
-            this.mostrarError('La cuenta fue creada, pero no se pudo iniciar sesión automáticamente. Intenta iniciar sesión manualmente.');
-          }
-        });
-      },
-      error: (error) => {
-        if (error?.status === 0) {
-          this.mostrarError('No se pudo conectar con el servidor. Verifica que el backend esté levantado en http://localhost:5123.');
-          return;
-        }
+      let data: any = null;
 
-        this.mostrarError(error?.error?.mensaje || 'No se pudo crear la cuenta. Revisa usuario, correo o teléfono.');
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
       }
-    });
+
+      if (!response.ok) {
+        this.mostrarError(data?.mensaje || 'No se pudo crear la cuenta. Revisa usuario, correo o teléfono.');
+        return;
+      }
+
+      this.password = '';
+      this.mostrarOk('Cuenta creada correctamente. Quédate aquí o cambia a Iniciar sesión para entrar con tu usuario.');
+    } catch {
+      this.mostrarError('No se pudo conectar con el servidor. Verifica que el backend esté levantado en http://localhost:5123.');
+    }
   }
 }

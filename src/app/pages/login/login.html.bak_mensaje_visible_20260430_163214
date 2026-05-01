@@ -18,12 +18,6 @@
       </button>
     </div>
 
-    @if (mensaje) {
-      <div class="message top-message" [class.ok]="tipoMensaje === 'ok'" [class.error]="tipoMensaje === 'error'">
-        {{ mensaje }}
-      </div>
-    }
-
     <div class="login-form" autocomplete="off">
       <label>Usuario</label>
       <input
@@ -104,6 +98,10 @@
           {{ cargando ? 'Creando cuenta...' : 'Crear cuenta' }}
         </button>
       }
+
+      <p class="message" [class.ok]="tipoMensaje === 'ok'" [class.error]="tipoMensaje === 'error'" *ngIf="mensaje">
+        {{ mensaje }}
+      </p>
     </div>
   </div>
 </section>

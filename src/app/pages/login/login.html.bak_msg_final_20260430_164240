@@ -18,12 +18,6 @@
       </button>
     </div>
 
-    @if (mensaje) {
-      <div class="message top-message" [class.ok]="tipoMensaje === 'ok'" [class.error]="tipoMensaje === 'error'">
-        {{ mensaje }}
-      </div>
-    }
-
     <div class="login-form" autocomplete="off">
       <label>Usuario</label>
       <input
@@ -95,6 +89,12 @@
         spellcheck="false"
       />
 
+      @if (mensaje) {
+        <p class="message" [class.ok]="tipoMensaje === 'ok'" [class.error]="tipoMensaje === 'error'">
+          {{ mensaje }}
+        </p>
+      }
+
       @if (modo === 'login') {
         <button type="button" (click)="iniciarSesion()" [disabled]="cargando">
           {{ cargando ? 'Ingresando...' : 'Iniciar sesión' }}
@@ -107,3 +107,4 @@
     </div>
   </div>
 </section>
+

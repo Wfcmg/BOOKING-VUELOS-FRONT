@@ -1,0 +1,172 @@
+﻿import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, Output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../services/auth';
+
+@Component({
+  selector: 'app-login',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './login.html',
+  styleUrl: './login.css'
+})
+export class Login {
+  @Output() loginCorrecto = new EventEmitter<string>();
+
+  modo: 'login' | 'registro' = 'login';
+
+  userName = '';
+  password = '';
+  nombreCompleto = '';
+  correoElectronico = '';
+  telefono = '';
+
+  mensaje = '';
+  tipoMensaje: 'ok' | 'error' = 'error';
+  cargando = false;
+
+  constructor(private authService: AuthService) {}
+
+  cambiarModo(modo: 'login' | 'registro') {
+    this.modo = modo;
+    this.mensaje = '';
+  }
+
+  soloNumeros(event: KeyboardEvent) {
+    const tecla = event.key;
+    if (!/^[0-9]$/.test(tecla) && tecla !== 'Backspace' && tecla !== 'Tab') {
+      event.preventDefault();
+    }
+  }
+
+  private mostrarError(mensaje: string) {
+    this.tipoMensaje = 'error';
+    this.mensaje = mensaje;
+  }
+
+  private mostrarOk(mensaje: string) {
+    this.tipoMensaje = 'ok';
+    this.mensaje = mensaje;
+  }
+
+  private validarRegistro(): boolean {
+    const nombreRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
+    const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const telefonoRegex = /^[0-9]{7,15}$/;
+
+    if (!this.userName.trim()) {
+      this.mostrarError('Por favor ingresa un nombre de usuario.');
+      return false;
+    }
+
+    if (this.userName.trim().length < 4) {
+      this.mostrarError('El usuario debe tener al menos 4 caracteres.');
+      return false;
+    }
+
+    if (!this.nombreCompleto.trim()) {
+      this.mostrarError('Por favor ingresa tu nombre completo.');
+      return false;
+    }
+
+    if (!nombreRegex.test(this.nombreCompleto.trim())) {
+      this.mostrarError('El nombre completo no debe contener números ni caracteres especiales.');
+      return false;
+    }
+
+    if (!this.correoElectronico.trim()) {
+      this.mostrarError('Por favor ingresa tu correo electrónico.');
+      return false;
+    }
+
+    if (!correoRegex.test(this.correoElectronico.trim())) {
+      this.mostrarError('Ingresa un correo electrónico válido.');
+      return false;
+    }
+
+    if (!this.telefono.trim()) {
+      this.mostrarError('Por favor ingresa tu teléfono.');
+      return false;
+    }
+
+    if (!telefonoRegex.test(this.telefono.trim())) {
+      this.mostrarError('El teléfono debe tener solo números, entre 7 y 15 dígitos.');
+      return false;
+    }
+
+    if (!this.password.trim()) {
+      this.mostrarError('Por favor ingresa una contraseña.');
+      return false;
+    }
+
+    if (this.password.length < 5) {
+      this.mostrarError('La contraseña debe tener al menos 5 caracteres.');
+      return false;
+    }
+
+    return true;
+  }
+
+  iniciarSesion() {
+    this.mensaje = '';
+
+    if (!this.userName.trim() || !this.password.trim()) {
+      this.mostrarError('Ingresa usuario y contraseña para continuar.');
+      return;
+    }
+
+    this.cargando = true;
+
+    this.authService.login({
+      userName: this.userName.trim(),
+      password: this.password
+    }).subscribe({
+      next: (response) => {
+        this.cargando = false;
+
+        this.mostrarOk(
+          response.rol === 'ADMIN'
+            ? 'Bienvenido administrador. Entrando al panel...'
+            : 'Bienvenido. Iniciando sesión...'
+        );
+
+        setTimeout(() => {
+          this.loginCorrecto.emit(response.rol);
+        }, 700);
+      },
+      error: () => {
+        this.cargando = false;
+        this.mostrarError('Usuario o contraseña incorrectos.');
+      }
+    });
+  }
+
+  crearCuenta() {
+    this.mensaje = '';
+
+    if (!this.validarRegistro()) {
+      return;
+    }
+
+    this.cargando = true;
+
+    this.authService.register({
+      userName: this.userName.trim(),
+      password: this.password,
+      nombreCompleto: this.nombreCompleto.trim(),
+      correoElectronico: this.correoElectronico.trim(),
+      telefono: this.telefono.trim()
+    }).subscribe({
+      next: () => {
+        this.cargando = false;
+        this.modo = 'login';
+        this.password = '';
+        this.mostrarOk('Cuenta creada correctamente. Ahora inicia sesión.');
+      },
+      error: (error) => {
+        this.cargando = false;
+        this.mostrarError(error?.error?.mensaje || 'No se pudo crear la cuenta. Revisa los datos.');
+      }
+    });
+  }
+}
+

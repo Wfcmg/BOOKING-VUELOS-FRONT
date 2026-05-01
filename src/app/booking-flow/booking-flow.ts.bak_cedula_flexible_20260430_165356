@@ -40,10 +40,6 @@ export class BookingFlow implements OnChanges {
   tipoMensaje: 'ok' | 'error' = 'error';
   procesando = false;
 
-  fechaHoy = new Date().toISOString().slice(0, 10);
-  fechaManana = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  pasajeroActivoIndex = 0;
-
   pasajeros: PasajeroForm[] = [];
   asientos: AsientoMapa[] = this.generarAsientos();
   asientosOcupados: string[] = [];
@@ -193,53 +189,6 @@ export class BookingFlow implements OnChanges {
     return this.pasajeros.some(p => p !== pasajeroActual && p.numeroAsiento === asiento);
   }
 
-  pasajeroActivo(): PasajeroForm | null {
-    return this.pasajeros[this.pasajeroActivoIndex] || this.pasajeros[0] || null;
-  }
-
-  seleccionarPasajeroParaAsiento(index: number): void {
-    if (index < 0 || index >= this.pasajeros.length) return;
-
-    this.pasajeroActivoIndex = index;
-    this.mensaje = '';
-  }
-
-  seleccionarAsientoActivo(asiento: AsientoMapa): void {
-    const pasajero = this.pasajeroActivo();
-
-    if (!pasajero) {
-      this.error('Primero registra un pasajero.');
-      return;
-    }
-
-    this.seleccionarAsiento(pasajero, asiento);
-  }
-
-  asientoSeleccionado(asiento: string): boolean {
-    const numero = String(asiento || '').trim().toUpperCase();
-    return this.pasajeros.some(p => String(p.numeroAsiento || '').trim().toUpperCase() === numero);
-  }
-
-  actualizarDocumentoPasajero(p: PasajeroForm): void {
-    const tipo = String(p.tipoDocumento || '').trim().toUpperCase();
-
-    if (tipo === 'CEDULA') {
-      p.numeroDocumento = this.soloDigitos(p.numeroDocumento).slice(0, 10);
-      return;
-    }
-
-    if (tipo === 'PASAPORTE') {
-      p.numeroDocumento = String(p.numeroDocumento || '')
-        .replace(/[^0-9A-Za-z-]/g, '')
-        .slice(0, 20)
-        .toUpperCase();
-      return;
-    }
-
-    p.numeroDocumento = String(p.numeroDocumento || '').slice(0, 20);
-  }
-
-
   actualizarEquipaje(p: PasajeroForm): void {
     if (p.equipajeTipo === 'Sin equipaje extra') {
       p.equipajeCantidad = 0;
@@ -281,18 +230,63 @@ export class BookingFlow implements OnChanges {
     if (!/^\d{10}$/.test(digitos)) return false;
 
     const provincia = Number(digitos.substring(0, 2));
-    return provincia >= 1 && provincia <= 24;
+    const tercerDigito = Number(digitos[2]);
+
+    if (provincia < 1 || provincia > 24) return false;
+    if (tercerDigito >= 6) return false;
+
+    const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+    let suma = 0;
+
+    for (let i = 0; i < 9; i++) {
+      let valor = Number(digitos[i]) * coeficientes[i];
+      if (valor > 9) valor -= 9;
+      suma += valor;
+    }
+
+    const verificador = (10 - (suma % 10)) % 10;
+    return verificador === Number(digitos[9]);
   }
 
   private validarRucEcuador(ruc: string): boolean {
     const digitos = this.soloDigitos(ruc);
 
     if (!/^\d{13}$/.test(digitos)) return false;
+    if (digitos.substring(10, 13) !== '001') return false;
 
-    const provincia = Number(digitos.substring(0, 2));
-    if (provincia < 1 || provincia > 24) return false;
+    const tercerDigito = Number(digitos[2]);
 
-    return digitos.endsWith('001');
+    if (tercerDigito < 6) {
+      return this.validarCedulaEcuador(digitos.substring(0, 10));
+    }
+
+    if (tercerDigito === 6) {
+      const coeficientes = [3, 2, 7, 6, 5, 4, 3, 2];
+      let suma = 0;
+
+      for (let i = 0; i < 8; i++) {
+        suma += Number(digitos[i]) * coeficientes[i];
+      }
+
+      const residuo = suma % 11;
+      const verificador = residuo === 0 ? 0 : 11 - residuo;
+      return verificador === Number(digitos[8]);
+    }
+
+    if (tercerDigito === 9) {
+      const coeficientes = [4, 3, 2, 7, 6, 5, 4, 3, 2];
+      let suma = 0;
+
+      for (let i = 0; i < 9; i++) {
+        suma += Number(digitos[i]) * coeficientes[i];
+      }
+
+      const residuo = suma % 11;
+      const verificador = residuo === 0 ? 0 : 11 - residuo;
+      return verificador === Number(digitos[9]);
+    }
+
+    return false;
   }
 
   private validarDocumentoEcuador(tipo: string, documento: string): boolean {
@@ -356,16 +350,8 @@ export class BookingFlow implements OnChanges {
         return this.error(`El documento del pasajero ${i + 1} no es valido.`);
       }
 
-      if (p.fechaNacimiento >= this.fechaHoy) {
+      if (p.fechaNacimiento >= new Date().toISOString().slice(0, 10)) {
         return this.error(`La fecha de nacimiento del pasajero ${i + 1} no puede ser hoy ni futura.`);
-      }
-
-      if (!p.fechaExpiracionDocumento) {
-        return this.error(`Completa la fecha de expiracion del documento del pasajero ${i + 1}.`);
-      }
-
-      if (p.fechaExpiracionDocumento <= this.fechaHoy) {
-        return this.error(`La fecha de expiracion del documento del pasajero ${i + 1} debe ser mayor a la fecha actual.`);
       }
     }
 
@@ -403,7 +389,7 @@ export class BookingFlow implements OnChanges {
 
     if (!this.validarDocumentoEcuador(this.datosFacturacion.tipoDocumento, this.datosFacturacion.rucCedula)) {
       if (String(this.datosFacturacion.tipoDocumento).toUpperCase() === 'CEDULA') {
-        return this.error('La cedula de facturacion no es valida. Debe tener 10 digitos y empezar con provincia 01 a 24.');
+        return this.error('La cedula de facturacion no es valida. Debe tener 10 digitos y pasar validacion ecuatoriana.');
       }
 
       if (String(this.datosFacturacion.tipoDocumento).toUpperCase() === 'RUC') {
@@ -636,7 +622,5 @@ export class BookingFlow implements OnChanges {
     }
   }
 }
-
-
 
 

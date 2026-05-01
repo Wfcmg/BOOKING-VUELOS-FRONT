@@ -113,8 +113,15 @@
           </div>
 
           <div class="flight-info">
-            <span>Número vuelo</span>
-            <strong>{{ vuelo.numeroVuelo }}</strong>
+            <span>Tipo</span>
+            <strong>
+              {{ vuelo.tipoVuelo || 'Directo' }}
+              <ng-container *ngIf="vuelo.escala as escala">
+                <span *ngIf="escala.codigoIATA">
+                  en {{ escala.ciudad }} ({{ escala.codigoIATA }})
+                </span>
+              </ng-container>
+            </strong>
           </div>
 
           <div class="flight-info">

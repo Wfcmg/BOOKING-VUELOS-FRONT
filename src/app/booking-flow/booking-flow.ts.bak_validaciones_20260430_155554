@@ -40,10 +40,6 @@ export class BookingFlow implements OnChanges {
   tipoMensaje: 'ok' | 'error' = 'error';
   procesando = false;
 
-  fechaHoy = new Date().toISOString().slice(0, 10);
-  fechaManana = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  pasajeroActivoIndex = 0;
-
   pasajeros: PasajeroForm[] = [];
   asientos: AsientoMapa[] = this.generarAsientos();
   asientosOcupados: string[] = [];
@@ -193,53 +189,6 @@ export class BookingFlow implements OnChanges {
     return this.pasajeros.some(p => p !== pasajeroActual && p.numeroAsiento === asiento);
   }
 
-  pasajeroActivo(): PasajeroForm | null {
-    return this.pasajeros[this.pasajeroActivoIndex] || this.pasajeros[0] || null;
-  }
-
-  seleccionarPasajeroParaAsiento(index: number): void {
-    if (index < 0 || index >= this.pasajeros.length) return;
-
-    this.pasajeroActivoIndex = index;
-    this.mensaje = '';
-  }
-
-  seleccionarAsientoActivo(asiento: AsientoMapa): void {
-    const pasajero = this.pasajeroActivo();
-
-    if (!pasajero) {
-      this.error('Primero registra un pasajero.');
-      return;
-    }
-
-    this.seleccionarAsiento(pasajero, asiento);
-  }
-
-  asientoSeleccionado(asiento: string): boolean {
-    const numero = String(asiento || '').trim().toUpperCase();
-    return this.pasajeros.some(p => String(p.numeroAsiento || '').trim().toUpperCase() === numero);
-  }
-
-  actualizarDocumentoPasajero(p: PasajeroForm): void {
-    const tipo = String(p.tipoDocumento || '').trim().toUpperCase();
-
-    if (tipo === 'CEDULA') {
-      p.numeroDocumento = this.soloDigitos(p.numeroDocumento).slice(0, 10);
-      return;
-    }
-
-    if (tipo === 'PASAPORTE') {
-      p.numeroDocumento = String(p.numeroDocumento || '')
-        .replace(/[^0-9A-Za-z-]/g, '')
-        .slice(0, 20)
-        .toUpperCase();
-      return;
-    }
-
-    p.numeroDocumento = String(p.numeroDocumento || '').slice(0, 20);
-  }
-
-
   actualizarEquipaje(p: PasajeroForm): void {
     if (p.equipajeTipo === 'Sin equipaje extra') {
       p.equipajeCantidad = 0;
@@ -270,68 +219,9 @@ export class BookingFlow implements OnChanges {
     return true;
   }
 
-
-  private soloDigitos(valor: string): string {
-    return String(valor || '').replace(/\D/g, '');
-  }
-
-  private validarCedulaEcuador(cedula: string): boolean {
-    const digitos = this.soloDigitos(cedula);
-
-    if (!/^\d{10}$/.test(digitos)) return false;
-
-    const provincia = Number(digitos.substring(0, 2));
-    return provincia >= 1 && provincia <= 24;
-  }
-
-  private validarRucEcuador(ruc: string): boolean {
-    const digitos = this.soloDigitos(ruc);
-
-    if (!/^\d{13}$/.test(digitos)) return false;
-
-    const provincia = Number(digitos.substring(0, 2));
-    if (provincia < 1 || provincia > 24) return false;
-
-    return digitos.endsWith('001');
-  }
-
-  private validarDocumentoEcuador(tipo: string, documento: string): boolean {
-    const tipoNormalizado = String(tipo || '').trim().toUpperCase();
-    const digitos = this.soloDigitos(documento);
-
-    if (tipoNormalizado === 'CEDULA') {
-      return this.validarCedulaEcuador(digitos);
-    }
-
-    if (tipoNormalizado === 'RUC') {
-      return this.validarRucEcuador(digitos);
-    }
-
-    return /^[0-9A-Za-z\-]{5,20}$/.test(String(documento || '').trim());
-  }
-
-  private validarTelefonoEcuador(telefono: string): boolean {
-    const digitos = this.soloDigitos(telefono);
-    return /^09\d{8}$/.test(digitos);
-  }
-
-  private validarNombreTexto(valor: string): boolean {
-    return /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]{2,80}$/.test(String(valor || '').trim());
-  }
-
-  private normalizarValidaciones(): void {
-    this.datosFacturacion.rucCedula = this.soloDigitos(this.datosFacturacion.rucCedula);
-    this.datosFacturacion.telefono = this.soloDigitos(this.datosFacturacion.telefono);
-
-    for (const p of this.pasajeros) {
-      p.numeroDocumento = this.soloDigitos(p.numeroDocumento);
-      p.nombres = String(p.nombres || '').trim();
-      p.apellidos = String(p.apellidos || '').trim();
-    }
-  }
-
   validarPasajeros(): boolean {
-    this.normalizarValidaciones();
+    const nombreRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
+    const docRegex = /^[0-9A-Za-z\-]{5,20}$/;
 
     for (let i = 0; i < this.pasajeros.length; i++) {
       const p = this.pasajeros[i];
@@ -340,32 +230,16 @@ export class BookingFlow implements OnChanges {
         return this.error(`Completa nombres, apellidos, nacimiento y documento del pasajero ${i + 1}.`);
       }
 
-      if (!this.validarNombreTexto(p.nombres) || !this.validarNombreTexto(p.apellidos)) {
-        return this.error(`El pasajero ${i + 1} tiene nombres o apellidos invalidos. Solo letras y espacios.`);
+      if (!nombreRegex.test(p.nombres.trim()) || !nombreRegex.test(p.apellidos.trim())) {
+        return this.error(`El pasajero ${i + 1} tiene nombres o apellidos invalidos.`);
       }
 
-      if (!this.validarDocumentoEcuador(p.tipoDocumento, p.numeroDocumento)) {
-        if (String(p.tipoDocumento).toUpperCase() === 'CEDULA') {
-          return this.error(`La cedula del pasajero ${i + 1} no es valida. Debe tener 10 digitos y pasar validacion ecuatoriana.`);
-        }
-
-        if (String(p.tipoDocumento).toUpperCase() === 'RUC') {
-          return this.error(`El RUC del pasajero ${i + 1} no es valido. Debe tener 13 digitos y terminar en 001.`);
-        }
-
+      if (!docRegex.test(p.numeroDocumento.trim())) {
         return this.error(`El documento del pasajero ${i + 1} no es valido.`);
       }
 
-      if (p.fechaNacimiento >= this.fechaHoy) {
+      if (p.fechaNacimiento >= new Date().toISOString().slice(0, 10)) {
         return this.error(`La fecha de nacimiento del pasajero ${i + 1} no puede ser hoy ni futura.`);
-      }
-
-      if (!p.fechaExpiracionDocumento) {
-        return this.error(`Completa la fecha de expiracion del documento del pasajero ${i + 1}.`);
-      }
-
-      if (p.fechaExpiracionDocumento <= this.fechaHoy) {
-        return this.error(`La fecha de expiracion del documento del pasajero ${i + 1} debe ser mayor a la fecha actual.`);
       }
     }
 
@@ -393,28 +267,10 @@ export class BookingFlow implements OnChanges {
   }
 
   validarPago(): boolean {
-    this.normalizarValidaciones();
-
     const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!this.datosFacturacion.rucCedula.trim() || !this.datosFacturacion.direccion.trim() || !this.datosFacturacion.ciudad.trim()) {
       return this.error('Completa cedula/RUC, direccion y ciudad para facturacion.');
-    }
-
-    if (!this.validarDocumentoEcuador(this.datosFacturacion.tipoDocumento, this.datosFacturacion.rucCedula)) {
-      if (String(this.datosFacturacion.tipoDocumento).toUpperCase() === 'CEDULA') {
-        return this.error('La cedula de facturacion no es valida. Debe tener 10 digitos y empezar con provincia 01 a 24.');
-      }
-
-      if (String(this.datosFacturacion.tipoDocumento).toUpperCase() === 'RUC') {
-        return this.error('El RUC de facturacion no es valido. Debe tener 13 digitos y terminar en 001.');
-      }
-
-      return this.error('El documento de facturacion no es valido.');
-    }
-
-    if (!this.validarTelefonoEcuador(this.datosFacturacion.telefono)) {
-      return this.error('El telefono debe ser un celular ecuatoriano valido: 10 digitos y empezar con 09.');
     }
 
     if (!correoRegex.test(this.datosFacturacion.correo.trim())) {
@@ -431,19 +287,8 @@ export class BookingFlow implements OnChanges {
       return this.error('El CVV debe tener 3 o 4 numeros.');
     }
 
-    if (!this.validarNombreTexto(this.datosFacturacion.tarjetaNombre)) {
-      return this.error('El nombre de la tarjeta debe contener solo letras y espacios.');
-    }
-
-    if (!this.datosFacturacion.tarjetaVencimiento) {
-      return this.error('Completa el vencimiento de la tarjeta.');
-    }
-
-    const hoy = new Date();
-    const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
-
-    if (this.datosFacturacion.tarjetaVencimiento < mesActual) {
-      return this.error('La tarjeta no puede estar vencida.');
+    if (!this.datosFacturacion.tarjetaNombre.trim() || !this.datosFacturacion.tarjetaVencimiento) {
+      return this.error('Completa nombre de tarjeta y vencimiento.');
     }
 
     this.datosFacturacion.referenciaPago = 'SIM-' + tarjetaLimpia.slice(-4) + '-' + Date.now();
@@ -636,7 +481,4 @@ export class BookingFlow implements OnChanges {
     }
   }
 }
-
-
-
 

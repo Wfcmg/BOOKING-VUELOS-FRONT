@@ -1,5 +1,5 @@
 ﻿import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, NgZone, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth';
 
@@ -26,39 +26,14 @@ export class Login {
 
   constructor(
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private zone: NgZone
   ) {}
-
-  private refrescarVista() {
-    setTimeout(() => {
-      try {
-        this.cdr.detectChanges();
-      } catch {
-        // Evita romper la pantalla si Angular ya actualizó.
-      }
-    }, 0);
-  }
-
-  private mostrarError(mensaje: string) {
-    this.cargando = false;
-    this.tipoMensaje = 'error';
-    this.mensaje = mensaje;
-    this.refrescarVista();
-  }
-
-  private mostrarOk(mensaje: string) {
-    this.cargando = false;
-    this.tipoMensaje = 'ok';
-    this.mensaje = mensaje;
-    this.refrescarVista();
-  }
 
   cambiarModo(modo: 'login' | 'registro') {
     this.modo = modo;
     this.mensaje = '';
     this.tipoMensaje = 'error';
     this.cargando = false;
-    this.refrescarVista();
   }
 
   soloNumeros(event: KeyboardEvent) {
@@ -99,6 +74,22 @@ export class Login {
       .replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]/g, '')
       .replace(/\s+/g, ' ')
       .slice(0, 80);
+  }
+
+  private mostrarError(mensaje: string) {
+    this.zone.run(() => {
+      this.cargando = false;
+      this.tipoMensaje = 'error';
+      this.mensaje = mensaje;
+    });
+  }
+
+  private mostrarOk(mensaje: string) {
+    this.zone.run(() => {
+      this.cargando = false;
+      this.tipoMensaje = 'ok';
+      this.mensaje = mensaje;
+    });
   }
 
   private validarRegistro(): boolean {
@@ -171,7 +162,6 @@ export class Login {
     }
 
     this.cargando = true;
-    this.refrescarVista();
 
     this.authService.login({
       userName: this.userName.trim(),
@@ -186,7 +176,7 @@ export class Login {
 
         setTimeout(() => {
           this.loginCorrecto.emit(response.rol);
-        }, 500);
+        }, 700);
       },
       error: (error) => {
         if (error?.status === 0) {
@@ -208,45 +198,28 @@ export class Login {
     if (!this.validarRegistro()) return;
 
     this.cargando = true;
-    this.refrescarVista();
 
-    const userNameLogin = this.userName.trim();
-    const passwordLogin = this.password;
-
-    const payload = {
-      userName: userNameLogin,
-      password: passwordLogin,
+    this.authService.register({
+      userName: this.userName.trim(),
+      password: this.password,
       nombreCompleto: this.nombreCompleto.replace(/\s+/g, ' ').trim(),
       correoElectronico: this.correoElectronico.trim(),
       telefono: this.telefono.replace(/\D/g, '').slice(0, 10)
-    };
-
-    this.authService.register(payload).subscribe({
+    }).subscribe({
       next: () => {
-        this.authService.login({
-          userName: userNameLogin,
-          password: passwordLogin
-        }).subscribe({
-          next: (response) => {
-            this.password = '';
-            this.mostrarOk('Cuenta creada correctamente. Iniciando sesión...');
-
-            setTimeout(() => {
-              this.loginCorrecto.emit(response.rol);
-            }, 500);
-          },
-          error: () => {
-            this.mostrarError('La cuenta fue creada, pero no se pudo iniciar sesión automáticamente. Intenta iniciar sesión manualmente.');
-          }
-        });
+        this.password = '';
+        this.mostrarOk('Cuenta creada correctamente. Quédate aquí o cambia a Iniciar sesión para entrar con tu usuario.');
       },
       error: (error) => {
         if (error?.status === 0) {
-          this.mostrarError('No se pudo conectar con el servidor. Verifica que el backend esté levantado en http://localhost:5123.');
+          this.mostrarError('No se pudo conectar con el servidor. Verifica que el backend esté levantado.');
           return;
         }
 
-        this.mostrarError(error?.error?.mensaje || 'No se pudo crear la cuenta. Revisa usuario, correo o teléfono.');
+        this.mostrarError(
+          error?.error?.mensaje ||
+          'No se pudo crear la cuenta. Revisa usuario, correo o teléfono.'
+        );
       }
     });
   }

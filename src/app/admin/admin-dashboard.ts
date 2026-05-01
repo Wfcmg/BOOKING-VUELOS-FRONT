@@ -210,11 +210,11 @@ export class AdminDashboard {
     {
       id: 'rutas',
       titulo: 'Rutas',
-      descripcion: 'Crear rutas entre aeropuertos',
+      descripcion: 'Visualizar rutas automáticas entre aeropuertos',
       icono: '🧭',
       endpoint: 'Rutas',
       pk: 'rutaId',
-      modo: 'crud',
+      modo: 'lectura',
       estadoCampo: 'activo',
       catalogos: ['Aeropuertos'],
       columnas: [
@@ -645,8 +645,6 @@ export class AdminDashboard {
     const catalogos = modulo.catalogos || [];
 
     for (const catalogo of catalogos) {
-      if (this.catalogos[catalogo]) continue;
-
       try {
         this.catalogos[catalogo] = await firstValueFrom(this.adminApi.listar(catalogo));
       } catch {
@@ -777,12 +775,16 @@ export class AdminDashboard {
 
     if (validacion) {
       this.error = validacion;
+      this.mensaje = '';
+      this.guardando = false;
+      this.cd.detectChanges();
       return;
     }
 
     this.guardando = true;
     this.error = '';
     this.mensaje = '';
+    this.cd.detectChanges();
 
     try {
       const payload = this.prepararPayload();
@@ -796,12 +798,16 @@ export class AdminDashboard {
         this.mensaje = 'Registro creado correctamente.';
       }
 
+      this.catalogos = {};
       this.cancelarFormulario();
+      await this.cargarCatalogosNecesarios(this.moduloActual);
       await this.cargarDatos();
     } catch (e: any) {
+      this.mensaje = '';
       this.error = this.obtenerMensajeError(e);
     } finally {
       this.guardando = false;
+      this.cd.detectChanges();
     }
   }
 
@@ -830,6 +836,8 @@ export class AdminDashboard {
       await firstValueFrom(this.adminApi.actualizar(this.moduloActual.endpoint, id, payload));
 
       this.mensaje = 'Registro inactivado correctamente.';
+      this.catalogos = {};
+      await this.cargarCatalogosNecesarios(this.moduloActual);
       await this.cargarDatos();
     } catch (e: any) {
       this.error = this.obtenerMensajeError(e);
@@ -896,6 +904,16 @@ export class AdminDashboard {
     for (const campo of this.moduloActual.campos) {
       let valor = this.formulario[campo.nombre];
 
+      if (this.moduloActual.id === 'paises') {
+        if (campo.nombre === 'codigoISO2' || campo.nombre === 'codigoISO3') {
+          valor = String(valor || '').trim().toUpperCase();
+        }
+
+        if (campo.nombre === 'nombre' || campo.nombre === 'nacionalidad') {
+          valor = String(valor || '').trim().replace(/\s+/g, ' ');
+        }
+      }
+
       if (campo.tipo === 'number') {
         valor = Number(valor || 0);
       }
@@ -923,6 +941,59 @@ export class AdminDashboard {
       if (campo.requerido && (valor === null || valor === undefined || valor === '')) {
         return `Completa el campo: ${campo.etiqueta}`;
       }
+    }
+
+    if (this.moduloActual.id === 'paises') {
+      const iso2 = String(this.formulario['codigoISO2'] || '').trim().toUpperCase();
+      const iso3 = String(this.formulario['codigoISO3'] || '').trim().toUpperCase();
+      const nombre = String(this.formulario['nombre'] || '').trim().replace(/\s+/g, ' ');
+
+      if (!/^[A-Z]{2}$/.test(iso2)) {
+        return 'El código ISO2 debe tener exactamente 2 letras. Ejemplo: CL.';
+      }
+
+      if (!/^[A-Z]{3}$/.test(iso3)) {
+        return 'El código ISO3 debe tener exactamente 3 letras. Ejemplo: CHL. No uses CHIL.';
+      }
+
+      if (nombre.length < 2 || nombre.length > 100) {
+        return 'El nombre del país debe tener entre 2 y 100 caracteres.';
+      }
+
+      const idActual = this.modoEdicion && this.registroEditando && this.moduloActual
+        ? this.valorCrudo(this.registroEditando, this.moduloActual.pk)
+        : null;
+
+      const duplicadoISO2 = this.registros.some((registro) =>
+        String(this.valorCrudo(registro, 'paisId')) !== String(idActual) &&
+        String(this.valorCrudo(registro, 'codigoISO2') || '').trim().toUpperCase() === iso2
+      );
+
+      if (duplicadoISO2) {
+        return `Ya existe un país con el código ISO2 ${iso2}.`;
+      }
+
+      const duplicadoISO3 = this.registros.some((registro) =>
+        String(this.valorCrudo(registro, 'paisId')) !== String(idActual) &&
+        String(this.valorCrudo(registro, 'codigoISO3') || '').trim().toUpperCase() === iso3
+      );
+
+      if (duplicadoISO3) {
+        return `Ya existe un país con el código ISO3 ${iso3}.`;
+      }
+
+      const duplicadoNombre = this.registros.some((registro) =>
+        String(this.valorCrudo(registro, 'paisId')) !== String(idActual) &&
+        String(this.valorCrudo(registro, 'nombre') || '').trim().toLowerCase() === nombre.toLowerCase()
+      );
+
+      if (duplicadoNombre) {
+        return `Ya existe un país con el nombre ${nombre}.`;
+      }
+
+      this.formulario['codigoISO2'] = iso2;
+      this.formulario['codigoISO3'] = iso3;
+      this.formulario['nombre'] = nombre;
     }
 
     if (this.moduloActual.id === 'rutas') {
@@ -971,10 +1042,33 @@ export class AdminDashboard {
   }
 
   private obtenerMensajeError(e: any): string {
+    if (e?.status === 0) {
+      return 'No se pudo conectar con el backend. Verifica que la API esté levantada en http://localhost:5123.';
+    }
+
     if (e?.error?.mensaje) return e.error.mensaje;
     if (e?.error?.message) return e.error.message;
-    if (typeof e?.error === 'string') return e.error;
+    if (e?.error?.title) return e.error.title;
+
+    if (typeof e?.error === 'string') {
+      const texto = e.error.trim();
+
+      if (
+        texto.includes('DeveloperExceptionPage') ||
+        texto.includes('Microsoft.EntityFrameworkCore') ||
+        texto.includes('System.') ||
+        texto.includes('DbUpdateException') ||
+        texto.includes('SqlException') ||
+        texto.length > 500
+      ) {
+        return 'El backend devolvió un error interno. Revisa la consola de la API para ver el detalle técnico.';
+      }
+
+      return texto;
+    }
+
     if (e?.message) return e.message;
+
     return 'Ocurrió un error al comunicarse con el backend.';
   }
 
@@ -1078,6 +1172,9 @@ export class AdminDashboard {
     });
   }
 }
+
+
+
 
 
 

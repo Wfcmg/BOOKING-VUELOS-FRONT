@@ -20,11 +20,6 @@ interface Vuelo {
   rutaId: number;
   avionId: number;
   numeroVuelo: string;
-  tipoVuelo?: string;
-  escala?: {
-    codigoIATA?: string;
-    ciudad?: string;
-  };
   fechaSalidaProgramada: string;
   fechaLlegadaProgramada: string;
   estado: string;
@@ -182,28 +177,6 @@ export class BuscarVuelos {
     }
   }
 
-  seleccionarOferta(origenId: number, destinoId: number) {
-    this.origenId = origenId;
-    this.destinoId = destinoId;
-
-    if (!this.fechaSalida || this.fechaSalida < this.minFecha) {
-      this.fechaSalida = this.minFecha;
-    }
-
-    this.fechaRegreso = '';
-    this.pasajeros = Math.max(1, Number(this.pasajeros || 1));
-    this.clase = this.clase || 'Económica';
-
-    this.mensajeBusqueda = 'Oferta cargada. Buscando vuelos disponibles...';
-    this.errorBusqueda = false;
-    this.vuelosEncontrados = [];
-    this.cdr.detectChanges();
-
-    setTimeout(() => {
-      this.buscarVuelos();
-    }, 180);
-  }
-
   seleccionarVuelo(vuelo: Vuelo) {
     this.vueloSeleccionado.emit({
       ...vuelo,
@@ -213,7 +186,6 @@ export class BuscarVuelos {
     });
   }
 }
-
 
 
 

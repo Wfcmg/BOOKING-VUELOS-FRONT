@@ -1,5 +1,5 @@
 ﻿import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth';
 
@@ -24,48 +24,40 @@ export class Login {
   tipoMensaje: 'ok' | 'error' = 'error';
   cargando = false;
 
-  constructor(
-    private authService: AuthService,
-    private cdr: ChangeDetectorRef
-  ) {}
-
-  private refrescarVista() {
-    setTimeout(() => {
-      try {
-        this.cdr.detectChanges();
-      } catch {
-        // Evita romper la pantalla si Angular ya actualizó.
-      }
-    }, 0);
-  }
-
-  private mostrarError(mensaje: string) {
-    this.cargando = false;
-    this.tipoMensaje = 'error';
-    this.mensaje = mensaje;
-    this.refrescarVista();
-  }
-
-  private mostrarOk(mensaje: string) {
-    this.cargando = false;
-    this.tipoMensaje = 'ok';
-    this.mensaje = mensaje;
-    this.refrescarVista();
-  }
+  constructor(private authService: AuthService) {}
 
   cambiarModo(modo: 'login' | 'registro') {
     this.modo = modo;
     this.mensaje = '';
-    this.tipoMensaje = 'error';
-    this.cargando = false;
-    this.refrescarVista();
+  }
+
+  soloLetras(event: KeyboardEvent) {
+    const teclasPermitidas = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', 'Home', 'End'];
+    const tecla = event.key;
+
+    if (teclasPermitidas.includes(tecla)) {
+      return;
+    }
+
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]$/.test(tecla)) {
+      event.preventDefault();
+    }
+  }
+
+  limpiarNombreCompleto() {
+    this.nombreCompleto = (this.nombreCompleto || '')
+      .replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]/g, '')
+      .replace(/\s+/g, ' ')
+      .slice(0, 80);
   }
 
   soloNumeros(event: KeyboardEvent) {
     const teclasPermitidas = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', 'Home', 'End'];
     const tecla = event.key;
 
-    if (teclasPermitidas.includes(tecla)) return;
+    if (teclasPermitidas.includes(tecla)) {
+      return;
+    }
 
     if (!/^[0-9]$/.test(tecla)) {
       event.preventDefault();
@@ -83,31 +75,20 @@ export class Login {
     this.telefono = (this.telefono || '').replace(/\D/g, '').slice(0, 10);
   }
 
-  soloLetras(event: KeyboardEvent) {
-    const teclasPermitidas = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', 'Home', 'End'];
-    const tecla = event.key;
-
-    if (teclasPermitidas.includes(tecla)) return;
-
-    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]$/.test(tecla)) {
-      event.preventDefault();
-    }
+  private mostrarError(mensaje: string) {
+    this.tipoMensaje = 'error';
+    this.mensaje = mensaje;
   }
 
-  limpiarNombreCompleto() {
-    this.nombreCompleto = (this.nombreCompleto || '')
-      .replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]/g, '')
-      .replace(/\s+/g, ' ')
-      .slice(0, 80);
+  private mostrarOk(mensaje: string) {
+    this.tipoMensaje = 'ok';
+    this.mensaje = mensaje;
   }
 
   private validarRegistro(): boolean {
     const nombreRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]{2,80}$/;
     const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const telefonoRegex = /^09[0-9]{8}$/;
-
-    this.limitarTelefono();
-    this.limpiarNombreCompleto();
 
     if (!this.userName.trim()) {
       this.mostrarError('Por favor ingresa un nombre de usuario.');
@@ -119,13 +100,15 @@ export class Login {
       return false;
     }
 
+    this.limpiarNombreCompleto();
+
     if (!this.nombreCompleto.trim()) {
       this.mostrarError('Por favor ingresa tu nombre completo.');
       return false;
     }
 
     if (!nombreRegex.test(this.nombreCompleto.trim())) {
-      this.mostrarError('El nombre completo solo debe contener letras y espacios. No se permiten números.');
+      this.mostrarError('El nombre completo no debe contener números ni caracteres especiales.');
       return false;
     }
 
@@ -171,13 +154,14 @@ export class Login {
     }
 
     this.cargando = true;
-    this.refrescarVista();
 
     this.authService.login({
       userName: this.userName.trim(),
       password: this.password
     }).subscribe({
       next: (response) => {
+        this.cargando = false;
+
         this.mostrarOk(
           response.rol === 'ADMIN'
             ? 'Bienvenido administrador. Entrando al panel...'
@@ -186,18 +170,17 @@ export class Login {
 
         setTimeout(() => {
           this.loginCorrecto.emit(response.rol);
-        }, 500);
+        }, 700);
       },
       error: (error) => {
+        this.cargando = false;
+
         if (error?.status === 0) {
-          this.mostrarError('No se pudo conectar con el servidor. Verifica que el backend esté levantado.');
+          this.mostrarError('No se pudo conectar con el servidor. Verifica que el backend esté levantado en http://localhost:5123.');
           return;
         }
 
-        this.mostrarError(
-          error?.error?.mensaje ||
-          'No se encontró el usuario o la contraseña es incorrecta. Si no tienes cuenta, crea una cuenta primero.'
-        );
+        this.mostrarError(error?.error?.mensaje || 'Usuario o contraseña incorrectos.');
       }
     });
   }
@@ -205,49 +188,39 @@ export class Login {
   crearCuenta() {
     this.mensaje = '';
 
-    if (!this.validarRegistro()) return;
+    if (!this.validarRegistro()) {
+      return;
+    }
 
     this.cargando = true;
-    this.refrescarVista();
 
-    const userNameLogin = this.userName.trim();
-    const passwordLogin = this.password;
-
-    const payload = {
-      userName: userNameLogin,
-      password: passwordLogin,
+    this.authService.register({
+      userName: this.userName.trim(),
+      password: this.password,
       nombreCompleto: this.nombreCompleto.replace(/\s+/g, ' ').trim(),
       correoElectronico: this.correoElectronico.trim(),
       telefono: this.telefono.replace(/\D/g, '').slice(0, 10)
-    };
-
-    this.authService.register(payload).subscribe({
+    }).subscribe({
       next: () => {
-        this.authService.login({
-          userName: userNameLogin,
-          password: passwordLogin
-        }).subscribe({
-          next: (response) => {
-            this.password = '';
-            this.mostrarOk('Cuenta creada correctamente. Iniciando sesión...');
-
-            setTimeout(() => {
-              this.loginCorrecto.emit(response.rol);
-            }, 500);
-          },
-          error: () => {
-            this.mostrarError('La cuenta fue creada, pero no se pudo iniciar sesión automáticamente. Intenta iniciar sesión manualmente.');
-          }
-        });
+        this.cargando = false;
+        this.modo = 'login';
+        this.password = '';
+        this.mostrarOk('Cuenta creada correctamente. Ahora inicia sesión.');
       },
       error: (error) => {
+        this.cargando = false;
+
         if (error?.status === 0) {
           this.mostrarError('No se pudo conectar con el servidor. Verifica que el backend esté levantado en http://localhost:5123.');
           return;
         }
 
-        this.mostrarError(error?.error?.mensaje || 'No se pudo crear la cuenta. Revisa usuario, correo o teléfono.');
+        this.mostrarError(error?.error?.mensaje || 'No se pudo crear la cuenta. Revisa los datos.');
       }
     });
   }
 }
+
+
+
+

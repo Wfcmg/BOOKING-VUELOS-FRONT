@@ -1,6 +1,6 @@
 ﻿<section class="booking-flow-page">
   <header class="flow-header">
-    <button class="back-btn" type="button" (click)="volver()">&#8592; Volver</button>
+    <button class="back-btn" type="button" (click)="volver()">â† Volver</button>
 
     <div>
       <span class="flow-badge">Reserva de vuelo</span>
@@ -89,7 +89,7 @@
               </label>
 
               <label>Fecha nacimiento
-                <input type="date" [(ngModel)]="p.fechaNacimiento" [max]="fechaHoy" />
+                <input type="date" [(ngModel)]="p.fechaNacimiento" />
               </label>
 
               <label>Género
@@ -112,11 +112,11 @@
               </label>
 
               <label>Número documento
-                <input type="text" [(ngModel)]="p.numeroDocumento" maxlength="20" (input)="actualizarDocumentoPasajero(p)" />
+                <input type="text" [(ngModel)]="p.numeroDocumento" />
               </label>
 
               <label>Expiración documento
-                <input type="date" [(ngModel)]="p.fechaExpiracionDocumento" [min]="fechaManana" />
+                <input type="date" [(ngModel)]="p.fechaExpiracionDocumento" />
               </label>
             </div>
           </article>
@@ -124,32 +124,23 @@
       </div>
 
       <div *ngSwitchCase="2">
-        <h2>Seleccion de asientos</h2>
-        <p>Primero elige el pasajero y luego selecciona su asiento en el mapa o en la lista.</p>
+        <h2>Selección de asientos</h2>
+        <p>Selecciona un asiento por pasajero. No se permite repetir asientos.</p>
 
         <div class="seat-wrapper">
           <div class="plane-map">
             <div class="plane-nose">CABINA</div>
-
-            <div class="active-seat-passenger">
-              <strong>Seleccionando para:</strong>
-              <span>
-                {{ pasajeroActivo()?.nombres || 'Pasajero ' + (pasajeroActivoIndex + 1) }}
-                {{ pasajeroActivo()?.apellidos || '' }}
-              </span>
-            </div>
 
             <div class="seat-grid">
               <button
                 *ngFor="let asiento of asientos"
                 type="button"
                 class="seat"
-                [class.selected]="asientoSeleccionado(asiento.numero)"
-                [class.active-seat]="pasajeroActivo()?.numeroAsiento === asiento.numero"
+                [class.selected]="pasajeros[0]?.numeroAsiento === asiento.numero || asientoSeleccionadoPorOtro(pasajeros[0], asiento.numero)"
                 [class.blocked]="asiento.ocupado"
                 [disabled]="asiento.ocupado"
                 [title]="asiento.ocupado ? 'Asiento ocupado' : 'Asiento disponible'"
-                (click)="seleccionarAsientoActivo(asiento)"
+                (click)="seleccionarAsiento(pasajeros[0], asiento)"
               >
                 {{ asiento.numero }}
               </button>
@@ -163,30 +154,19 @@
           </div>
 
           <div class="seat-select-list">
-            <article
-              *ngFor="let p of pasajeros; let i = index"
-              [class.active-passenger]="i === pasajeroActivoIndex"
-              (click)="seleccionarPasajeroParaAsiento(i)"
-            >
-              <h3>{{ p.nombres || 'Pasajero ' + (i + 1) }} {{ p.apellidos }}</h3>
-
-              <button type="button" class="select-passenger-btn" (click)="seleccionarPasajeroParaAsiento(i)">
-                Seleccionar asiento para este pasajero
-              </button>
-
-              <select [(ngModel)]="p.numeroAsiento" (change)="guardarEstadoTemporal()">
+            <article *ngFor="let p of pasajeros; let i = index">
+              <h3>{{ p.nombres || 'Pasajero ' + (i + 1) }}</h3>
+              <select [(ngModel)]="p.numeroAsiento">
                 <option value="">Selecciona asiento</option>
                 <option
                   *ngFor="let asiento of asientos"
                   [value]="asiento.numero"
                   [disabled]="asiento.ocupado || asientoSeleccionadoPorOtro(p, asiento.numero)"
                 >
-                  {{ asiento.numero }} {{ asiento.ocupado ? '(ocupado)' : asientoSeleccionadoPorOtro(p, asiento.numero) ? '(ya elegido)' : '' }}
+                  {{ asiento.numero }} {{ asiento.ocupado ? '(ocupado)' : '' }}
                 </option>
               </select>
-
               <span *ngIf="p.numeroAsiento">Asignado: {{ p.numeroAsiento }}</span>
-              <span *ngIf="!p.numeroAsiento">Sin asiento asignado</span>
             </article>
           </div>
         </div>
@@ -377,7 +357,6 @@
     </div>
   </section>
 </section>
-
 
 
 

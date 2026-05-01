@@ -21,6 +21,7 @@
       <nav class="nav-links">
         <button type="button" (click)="scrollABusqueda()">Descubre</button>
         <button type="button" (click)="abrirMisViajes()">Mis viajes</button>
+        <button type="button" (click)="scrollABusqueda()">Centro de ayuda</button>
       </nav>
 
       @if (!authService.estaLogueado()) {
@@ -79,7 +80,7 @@
             <p>Vuelo rápido ideal para escapadas o viajes de trabajo.</p>
             <div class="offer-footer">
               <strong>Desde $59</strong>
-              <button type="button" (click)="reservarOferta(1, 2)">Reservar</button>
+              <button type="button" (click)="scrollABusqueda()">Reservar</button>
             </div>
           </div>
         </article>
@@ -92,7 +93,7 @@
             <p>Conecta con una de las ciudades más vibrantes de la región.</p>
             <div class="offer-footer">
               <strong>Desde $129</strong>
-              <button type="button" (click)="reservarOferta(1, 3)">Reservar</button>
+              <button type="button" (click)="scrollABusqueda()">Reservar</button>
             </div>
           </div>
         </article>
@@ -105,7 +106,7 @@
             <p>Explora gastronomía, cultura y experiencias únicas.</p>
             <div class="offer-footer">
               <strong>Desde $149</strong>
-              <button type="button" (click)="reservarOferta(2, 4)">Reservar</button>
+              <button type="button" (click)="scrollABusqueda()">Reservar</button>
             </div>
           </div>
         </article>
@@ -124,3 +125,4 @@
     </div>
   }
 }
+

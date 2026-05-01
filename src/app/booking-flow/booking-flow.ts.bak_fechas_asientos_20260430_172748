@@ -40,10 +40,6 @@ export class BookingFlow implements OnChanges {
   tipoMensaje: 'ok' | 'error' = 'error';
   procesando = false;
 
-  fechaHoy = new Date().toISOString().slice(0, 10);
-  fechaManana = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  pasajeroActivoIndex = 0;
-
   pasajeros: PasajeroForm[] = [];
   asientos: AsientoMapa[] = this.generarAsientos();
   asientosOcupados: string[] = [];
@@ -193,53 +189,6 @@ export class BookingFlow implements OnChanges {
     return this.pasajeros.some(p => p !== pasajeroActual && p.numeroAsiento === asiento);
   }
 
-  pasajeroActivo(): PasajeroForm | null {
-    return this.pasajeros[this.pasajeroActivoIndex] || this.pasajeros[0] || null;
-  }
-
-  seleccionarPasajeroParaAsiento(index: number): void {
-    if (index < 0 || index >= this.pasajeros.length) return;
-
-    this.pasajeroActivoIndex = index;
-    this.mensaje = '';
-  }
-
-  seleccionarAsientoActivo(asiento: AsientoMapa): void {
-    const pasajero = this.pasajeroActivo();
-
-    if (!pasajero) {
-      this.error('Primero registra un pasajero.');
-      return;
-    }
-
-    this.seleccionarAsiento(pasajero, asiento);
-  }
-
-  asientoSeleccionado(asiento: string): boolean {
-    const numero = String(asiento || '').trim().toUpperCase();
-    return this.pasajeros.some(p => String(p.numeroAsiento || '').trim().toUpperCase() === numero);
-  }
-
-  actualizarDocumentoPasajero(p: PasajeroForm): void {
-    const tipo = String(p.tipoDocumento || '').trim().toUpperCase();
-
-    if (tipo === 'CEDULA') {
-      p.numeroDocumento = this.soloDigitos(p.numeroDocumento).slice(0, 10);
-      return;
-    }
-
-    if (tipo === 'PASAPORTE') {
-      p.numeroDocumento = String(p.numeroDocumento || '')
-        .replace(/[^0-9A-Za-z-]/g, '')
-        .slice(0, 20)
-        .toUpperCase();
-      return;
-    }
-
-    p.numeroDocumento = String(p.numeroDocumento || '').slice(0, 20);
-  }
-
-
   actualizarEquipaje(p: PasajeroForm): void {
     if (p.equipajeTipo === 'Sin equipaje extra') {
       p.equipajeCantidad = 0;
@@ -356,16 +305,8 @@ export class BookingFlow implements OnChanges {
         return this.error(`El documento del pasajero ${i + 1} no es valido.`);
       }
 
-      if (p.fechaNacimiento >= this.fechaHoy) {
+      if (p.fechaNacimiento >= new Date().toISOString().slice(0, 10)) {
         return this.error(`La fecha de nacimiento del pasajero ${i + 1} no puede ser hoy ni futura.`);
-      }
-
-      if (!p.fechaExpiracionDocumento) {
-        return this.error(`Completa la fecha de expiracion del documento del pasajero ${i + 1}.`);
-      }
-
-      if (p.fechaExpiracionDocumento <= this.fechaHoy) {
-        return this.error(`La fecha de expiracion del documento del pasajero ${i + 1} debe ser mayor a la fecha actual.`);
       }
     }
 
@@ -636,7 +577,6 @@ export class BookingFlow implements OnChanges {
     }
   }
 }
-
 
 
 

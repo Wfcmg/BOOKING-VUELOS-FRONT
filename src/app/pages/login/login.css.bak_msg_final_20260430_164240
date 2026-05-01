@@ -147,25 +147,3 @@
   color: #b00035;
   border: 1px solid #ff9db6;
 }
-
-.top-message {
-  display: block;
-  margin: 0 0 14px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  font-weight: 800;
-  text-align: center;
-  line-height: 1.35;
-}
-
-.top-message.ok {
-  background: #e8fff2;
-  color: #087a3d;
-  border: 1px solid #93efb8;
-}
-
-.top-message.error {
-  background: #fff0f3;
-  color: #b00035;
-  border: 1px solid #ff9db6;
-}
