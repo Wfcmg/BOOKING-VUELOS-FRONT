@@ -8,7 +8,7 @@ export type RegistroAdmin = Record<string, any>;
   providedIn: 'root'
 })
 export class AdminApiService {
-  private readonly baseUrl = 'http://localhost:5123/api';
+  private readonly baseUrl = 'https://localhost:44398/api';
 
   constructor(private http: HttpClient) {}
 

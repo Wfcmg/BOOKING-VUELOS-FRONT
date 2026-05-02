@@ -56,7 +56,7 @@ interface ModuloAdmin {
 export class AdminDashboard {
   @Output() salirAdmin = new EventEmitter<void>();
 
-  readonly apiBase = 'http://localhost:5123/api';
+  readonly apiBase = 'https://localhost:44398/api';
 
   moduloActual: ModuloAdmin | null = null;
   registros: RegistroAdmin[] = [];
@@ -1043,7 +1043,7 @@ export class AdminDashboard {
 
   private obtenerMensajeError(e: any): string {
     if (e?.status === 0) {
-      return 'No se pudo conectar con el backend. Verifica que la API esté levantada en http://localhost:5123.';
+      return 'No se pudo conectar con el backend. Verifica que la API esté levantada en https://localhost:44398.';
     }
 
     if (e?.error?.mensaje) return e.error.mensaje;

@@ -59,7 +59,7 @@ export class BuscarVuelos {
   mensajeBusqueda = '';
   errorBusqueda = false;
 
-  private apiUrl = 'http://localhost:5123/api';
+  private apiUrl = 'https://localhost:44398/api';
   private temporizadorBusqueda: any = null;
 
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {

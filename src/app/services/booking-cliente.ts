@@ -17,9 +17,31 @@ export interface ConfirmarReservaClienteRequest {
   providedIn: 'root'
 })
 export class BookingClienteService {
-  private apiUrl = 'http://localhost:5123/api';
+
+  // Backend local: cuando trabajas desde Angular local
+  private readonly apiLocal = 'https://localhost:44398/api';
+
+  // Backend desplegado en Azure: cuando el front está en Netlify
+  private readonly apiProduccion = 'https://microserviciobookingvuelosapi20260501193602-bvdzesg6gzc6ekas.brazilsouth-01.azurewebsites.net/api';
 
   constructor(private http: HttpClient) {}
+
+  private get apiUrl(): string {
+    // Evita error si Angular corre en modo SSR/server
+    if (typeof window === 'undefined') {
+      return this.apiProduccion;
+    }
+
+    const host = window.location.hostname;
+
+    // Si estás en local: http://localhost:4200
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return this.apiLocal;
+    }
+
+    // Si estás en Netlify: https://booking-vuelos-front.netlify.app
+    return this.apiProduccion;
+  }
 
   listarAeropuertos(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/Aeropuertos`);
@@ -32,10 +54,15 @@ export class BookingClienteService {
   }
 
   confirmarReserva(request: ConfirmarReservaClienteRequest): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/ClienteBooking/confirmar-reserva`, request);
+    return this.http.post<any>(
+      `${this.apiUrl}/ClienteBooking/confirmar-reserva`,
+      request
+    );
   }
 
   misViajes(usuarioAppId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/ClienteBooking/mis-viajes/${usuarioAppId}`);
+    return this.http.get<any[]>(
+      `${this.apiUrl}/ClienteBooking/mis-viajes/${usuarioAppId}`
+    );
   }
 }

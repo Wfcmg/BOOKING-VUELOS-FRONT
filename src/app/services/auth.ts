@@ -37,7 +37,7 @@ interface RegisterResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:5123/api/Auth';
+  private apiUrl = 'https://localhost:44398/api/Auth';
 
   constructor(private http: HttpClient) {}
 

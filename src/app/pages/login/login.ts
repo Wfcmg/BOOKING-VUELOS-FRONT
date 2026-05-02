@@ -242,7 +242,7 @@ export class Login {
       },
       error: (error) => {
         if (error?.status === 0) {
-          this.mostrarError('No se pudo conectar con el servidor. Verifica que el backend esté levantado en http://localhost:5123.');
+          this.mostrarError('No se pudo conectar con el servidor. Verifica que el backend esté levantado en https://localhost:44398.');
           return;
         }
 

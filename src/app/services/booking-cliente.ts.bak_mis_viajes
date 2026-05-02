@@ -17,7 +17,7 @@ export interface ConfirmarReservaClienteRequest {
   providedIn: 'root'
 })
 export class BookingClienteService {
-  private apiUrl = 'http://localhost:5123/api';
+  private apiUrl = 'https://localhost:44398/api';
 
   constructor(private http: HttpClient) {}
 

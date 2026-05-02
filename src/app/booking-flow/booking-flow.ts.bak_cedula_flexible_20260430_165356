@@ -131,7 +131,7 @@ export class BookingFlow implements OnChanges {
     }
 
     try {
-      const respuesta = await fetch(`http://localhost:5123/api/ClienteBooking/asientos-ocupados/${vueloId}`, {
+      const respuesta = await fetch(`https://localhost:44398/api/ClienteBooking/asientos-ocupados/${vueloId}`, {
         method: 'GET',
         cache: 'no-store'
       });

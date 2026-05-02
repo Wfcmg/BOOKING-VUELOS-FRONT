@@ -41,7 +41,7 @@ export class MisViajes implements OnInit {
     this.cd.detectChanges();
 
     try {
-      const respuesta = await fetch(`http://localhost:5123/api/ClienteBooking/mis-viajes/${usuarioAppId}`, {
+      const respuesta = await fetch(`https://localhost:44398/api/ClienteBooking/mis-viajes/${usuarioAppId}`, {
         method: 'GET',
         cache: 'no-store'
       });
