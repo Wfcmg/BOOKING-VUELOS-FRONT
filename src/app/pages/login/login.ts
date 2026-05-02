@@ -242,7 +242,7 @@ export class Login {
       },
       error: (error) => {
         if (error?.status === 0) {
-          this.mostrarError('No se pudo conectar con el servidor. Verifica que el backend esté levantado en https://localhost:44398.');
+          this.mostrarError('No se pudo conectar con el servidor. Verifica que el backend esté levantado en https://microserviciobookingvuelosapi20260501193602-bvdzesg6gzc6ekas.brazilsouth-01.azurewebsites.net.');
           return;
         }
 

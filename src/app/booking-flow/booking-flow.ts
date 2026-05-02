@@ -135,7 +135,7 @@ export class BookingFlow implements OnChanges {
     }
 
     try {
-      const respuesta = await fetch(`https://localhost:44398/api/ClienteBooking/asientos-ocupados/${vueloId}`, {
+      const respuesta = await fetch(`https://microserviciobookingvuelosapi20260501193602-bvdzesg6gzc6ekas.brazilsouth-01.azurewebsites.net/api/ClienteBooking/asientos-ocupados/${vueloId}`, {
         method: 'GET',
         cache: 'no-store'
       });

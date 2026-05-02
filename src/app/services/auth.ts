@@ -37,7 +37,7 @@ interface RegisterResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'https://localhost:44398/api/Auth';
+  private apiUrl = 'https://microserviciobookingvuelosapi20260501193602-bvdzesg6gzc6ekas.brazilsouth-01.azurewebsites.net/api/Auth';
 
   constructor(private http: HttpClient) {}
 

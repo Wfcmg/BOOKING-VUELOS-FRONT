@@ -87,7 +87,7 @@ export class Login {
 
   private extraerMensajeError(error: any, mensajeDefault: string): string {
     if (error?.status === 0) {
-      return 'No se pudo conectar con el servidor. Verifica que el backend esté levantado en https://localhost:44398.';
+      return 'No se pudo conectar con el servidor. Verifica que el backend esté levantado en https://microserviciobookingvuelosapi20260501193602-bvdzesg6gzc6ekas.brazilsouth-01.azurewebsites.net.';
     }
 
     if (typeof error?.error === 'string') {
@@ -214,7 +214,7 @@ export class Login {
     };
 
     try {
-      const response = await fetch('https://localhost:44398/api/Auth/register', {
+      const response = await fetch('https://microserviciobookingvuelosapi20260501193602-bvdzesg6gzc6ekas.brazilsouth-01.azurewebsites.net/api/Auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -244,7 +244,7 @@ export class Login {
     } catch {
       this.cargando = false;
       this.tipoMensaje = 'error';
-      this.mensaje = 'No se pudo conectar con el servidor. Verifica que el backend esté levantado en https://localhost:44398.';
+      this.mensaje = 'No se pudo conectar con el servidor. Verifica que el backend esté levantado en https://microserviciobookingvuelosapi20260501193602-bvdzesg6gzc6ekas.brazilsouth-01.azurewebsites.net.';
     }
   }
 }

@@ -8,7 +8,7 @@ export type RegistroAdmin = Record<string, any>;
   providedIn: 'root'
 })
 export class AdminApiService {
-  private readonly baseUrl = 'https://localhost:44398/api';
+  private readonly baseUrl = 'https://microserviciobookingvuelosapi20260501193602-bvdzesg6gzc6ekas.brazilsouth-01.azurewebsites.net/api';
 
   constructor(private http: HttpClient) {}
 

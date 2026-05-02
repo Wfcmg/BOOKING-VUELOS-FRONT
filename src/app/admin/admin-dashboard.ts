@@ -56,7 +56,7 @@ interface ModuloAdmin {
 export class AdminDashboard {
   @Output() salirAdmin = new EventEmitter<void>();
 
-  readonly apiBase = 'https://localhost:44398/api';
+  readonly apiBase = 'https://microserviciobookingvuelosapi20260501193602-bvdzesg6gzc6ekas.brazilsouth-01.azurewebsites.net/api';
 
   moduloActual: ModuloAdmin | null = null;
   registros: RegistroAdmin[] = [];
@@ -1043,7 +1043,7 @@ export class AdminDashboard {
 
   private obtenerMensajeError(e: any): string {
     if (e?.status === 0) {
-      return 'No se pudo conectar con el backend. Verifica que la API esté levantada en https://localhost:44398.';
+      return 'No se pudo conectar con el backend. Verifica que la API esté levantada en https://microserviciobookingvuelosapi20260501193602-bvdzesg6gzc6ekas.brazilsouth-01.azurewebsites.net.';
     }
 
     if (e?.error?.mensaje) return e.error.mensaje;
